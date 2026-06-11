@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>令牌管理 · 子平八字</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="liquidBg"></div>
+
+  <div class="container">
+
+    <!-- Password Gate -->
+    <div id="passwordGate" style="padding:80px 0">
+      <div class="glass-card token-generator">
+        <h2 style="font-family:var(--font-display);color:var(--text);font-size:1.3rem;margin-bottom:20px;text-align:center">管理员登录</h2>
+        <div style="max-width:300px;margin:0 auto">
+          <input type="password" id="adminPassword" placeholder="请输入管理密码" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;color:var(--text);font-size:1rem;outline:none;text-align:center;letter-spacing:0.2em">
+          <button class="generate-btn" id="loginBtn" style="width:100%;margin-top:14px">进入</button>
+          <p id="loginError" style="color:var(--red);font-size:0.78rem;margin-top:10px;text-align:center;display:none">密码错误</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Panel (hidden until login) -->
+    <div id="adminPanel" class="hidden">
+    <header class="admin-header">
+      <h1>令牌管理</h1>
+      <p style="color:var(--text-dim);font-size:0.84rem;letter-spacing:0.1em;margin-top:8px">子平八字 · 付费用户管理</p>
+    </header>
+
+    <!-- Base URL Config -->
+    <div class="glass-card token-generator" style="margin-bottom:24px">
+      <h2 style="font-family:var(--font-display);color:var(--text);font-size:1.1rem;margin-bottom:8px;letter-spacing:0.1em">网站地址设置</h2>
+      <p style="color:var(--text-muted);font-size:0.78rem;margin-bottom:16px">输入你的付费版网站实际部署地址（只需设置一次）</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="baseURLInput" placeholder="https://你的域名.com/bazi-fortune/paid/" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-body);font-size:0.88rem;outline:none">
+        <button class="copy-btn" id="saveBaseURL">保存</button>
+      </div>
+      <p id="baseURLStatus" style="color:var(--green);font-size:0.72rem;margin-top:8px;display:none">已保存</p>
+    </div>
+
+    <!-- Token Generator -->
+    <div class="glass-card token-generator">
+      <h2 style="font-family:var(--font-display);color:var(--text);font-size:1.1rem;margin-bottom:8px;letter-spacing:0.1em">生成新令牌</h2>
+      <p style="color:var(--text-muted);font-size:0.78rem;margin-bottom:20px">每次点击生成一个全新的唯一令牌</p>
+
+      <button class="generate-btn" id="generateBtn">生成令牌</button>
+
+      <div id="newTokenArea" class="hidden">
+        <div class="token-display" id="tokenDisplay"></div>
+        <div class="token-url" id="tokenURL"></div>
+        <button class="copy-btn" id="copyBtn">复制链接</button>
+      </div>
+    </div>
+
+    <!-- Token History -->
+    <section style="margin-top:40px">
+      <h2 class="section-title">历史令牌</h2>
+      <div class="glass-card token-list">
+        <table id="tokenTable">
+          <thead>
+            <tr>
+              <th>令牌</th>
+              <th>创建时间</th>
+              <th>状态</th>
+              <th>使用时间</th>
+            </tr>
+          </thead>
+          <tbody id="tokenTableBody">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">暂无令牌</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>仅管理员可见 · 请勿外泄此页面</p>
+    </footer>
+    </div><!-- /adminPanel -->
+  </div>
+
+  <script src="js/liquid-chrome.js"></script>
+  <script src="js/token-manager.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    var TM = window.TokenManager;
+    var BASE_URL_KEY = 'bazi_paid_base_url';
+    var ADMIN_PASS = 'bazi2026';
+
+    // Init WebGL background
+    LiquidChrome.init(document.getElementById('liquidBg'), {
+      baseColor: [0.06, 0.06, 0.07],
+      speed: 0.15,
+      amplitude: 0.2,
+      interactive: true
+    });
+
+    // ─── Password Gate ───
+    var passwordGate = document.getElementById('passwordGate');
+    var adminPanel = document.getElementById('adminPanel');
+    var adminPassword = document.getElementById('adminPassword');
+    var loginBtn = document.getElementById('loginBtn');
+    var loginError = document.getElementById('loginError');
+
+    // Check if already logged in
+    if (sessionStorage.getItem('bazi_admin_auth') === '1') {
+      passwordGate.classList.add('hidden');
+      adminPanel.classList.remove('hidden');
+    }
+
+    loginBtn.addEventListener('click', function() {
+      if (adminPassword.value === ADMIN_PASS) {
+        sessionStorage.setItem('bazi_admin_auth', '1');
+        passwordGate.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loginError.style.display = 'none';
+      } else {
+        loginError.style.display = 'block';
+      }
+    });
+
+    adminPassword.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+
+    // ─── Elements ───
+    var generateBtn = document.getElementById('generateBtn');
+    var newTokenArea = document.getElementById('newTokenArea');
+    var tokenDisplay = document.getElementById('tokenDisplay');
+    var tokenURL = document.getElementById('tokenURL');
+    var copyBtn = document.getElementById('copyBtn');
+    var tokenTableBody = document.getElementById('tokenTableBody');
+    var baseURLInput = document.getElementById('baseURLInput');
+    var saveBaseURLBtn = document.getElementById('saveBaseURL');
+    var baseURLStatus = document.getElementById('baseURLStatus');
+
+    var currentToken = null;
+
+    // ─── Load saved base URL (auto-detect on deployed version) ───
+    function getBaseURL() {
+      var saved = localStorage.getItem(BASE_URL_KEY);
+      if (saved) return saved;
+
+      var origin = window.location.origin;
+      var path = window.location.pathname.replace(/admin\.html$/, '');
+      if (origin && origin !== 'null' && !origin.startsWith('file://')) {
+        return origin + path;
+      }
+      return '';
+    }
+
+    var savedURL = getBaseURL();
+    if (savedURL) {
+      baseURLInput.value = savedURL;
+    }
+
+    saveBaseURLBtn.addEventListener('click', function() {
+      var url = baseURLInput.value.trim();
+      if (!url) return;
+      if (!url.endsWith('/')) url += '/';
+      localStorage.setItem(BASE_URL_KEY, url);
+      baseURLInput.value = url;
+      baseURLStatus.style.display = 'block';
+      setTimeout(function() { baseURLStatus.style.display = 'none'; }, 2000);
+    });
+
+    function buildLink(token) {
+      // Always use the same origin + path as current, replacing admin.html with index.html
+      var base = window.location.origin + window.location.pathname.replace(/admin\.html$/, 'index.html');
+      return base + '?token=' + token;
+    }
+
+    // ─── Generate Token ───
+    generateBtn.addEventListener('click', function() {
+      currentToken = TM.generateToken();
+      tokenDisplay.textContent = currentToken;
+
+      var fullURL = buildLink(currentToken);
+      tokenURL.textContent = fullURL;
+      newTokenArea.classList.remove('hidden');
+      copyBtn.textContent = '复制链接';
+      copyBtn.classList.remove('copied');
+      refreshTable();
+    });
+
+    copyBtn.addEventListener('click', function() {
+      var fullURL = buildLink(currentToken);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(fullURL).then(function() {
+          copyBtn.textContent = '已复制!'; copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = '复制链接'; copyBtn.classList.remove('copied'); }, 2000);
+        }).catch(function() { fallbackCopy(fullURL); });
+      } else { fallbackCopy(fullURL); }
+    });
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); copyBtn.textContent = '已复制!'; copyBtn.classList.add('copied'); }
+      catch(e) { copyBtn.textContent = '复制失败，请手动复制'; }
+      document.body.removeChild(ta);
+    }
+
+    function refreshTable() {
+      var tokens = TM.getTokenList();
+      if (tokens.length === 0) {
+        tokenTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">暂无令牌</td></tr>';
+        return;
+      }
+      var html = '';
+      tokens.forEach(function(t) {
+        var d = new Date(t.createdAt);
+        var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+        var usedStr = t.usedAt ? new Date(t.usedAt).toLocaleString('zh-CN') : '—';
+        var sc = t.status === 'unused' ? 'status-unused' : 'status-used';
+        var st = t.status === 'unused' ? '未使用' : '已使用';
+        html += '<tr><td style="font-family:monospace;font-size:0.8rem">'+t.token+'</td><td>'+ds+'</td><td class="'+sc+'">'+st+'</td><td style="font-size:0.72rem;color:var(--text-muted)">'+usedStr+'</td></tr>';
+      });
+      tokenTableBody.innerHTML = html;
+    }
+
+    refreshTable();
+    setInterval(refreshTable, 10000);
+  })();
+  </script>
+</body>
+</html>

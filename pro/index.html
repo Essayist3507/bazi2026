@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>子平八字 Pro · 命理精算</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="bgCanvas"></div>
+  <div class="container">
+    <header class="header"><h1 class="title">子平八字</h1><p class="subtitle">子平真传 · 紫微合参 · 命理精算</p></header>
+
+    <div class="input-card" id="inputSection">
+      <div class="calendar-toggle">
+        <button class="toggle-btn active" data-calendar="solar" id="btnSolar">公历</button>
+        <button class="toggle-btn" data-calendar="lunar" id="btnLunar">农历</button>
+      </div>
+      <div class="date-inputs" id="solarInputs">
+        <div class="input-group"><label>年份</label><input type="number" id="solarYear" value="2006" min="1900" max="2100"></div>
+        <div class="input-group"><label>月份</label><select id="solarMonth"><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5" selected>5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></div>
+        <div class="input-group"><label>日期</label><input type="number" id="solarDay" value="17" min="1" max="31"></div>
+      </div>
+      <div class="date-inputs hidden" id="lunarInputs">
+        <div class="input-group"><label>年份</label><input type="number" id="lunarYear" value="2006" min="1900" max="2100"></div>
+        <div class="input-group"><label>月份</label><select id="lunarMonth"></select></div>
+        <div class="input-group"><label>日期</label><select id="lunarDay"></select></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label>时辰</label><select id="birthHour"><option value="0">子时 23-01</option><option value="1">丑时 01-03</option><option value="2">寅时 03-05</option><option value="3">卯时 05-07</option><option value="4">辰时 07-09</option><option value="5">巳时 09-11</option><option value="6" selected>午时 11-13</option><option value="7">未时 13-15</option><option value="8">申时 15-17</option><option value="9">酉时 17-19</option><option value="10">戌时 19-21</option><option value="11">亥时 21-23</option></select></div>
+        <div class="input-group"><label>性别</label><div class="gender-toggle"><button class="toggle-btn active" data-gender="male" id="btnMale">男</button><button class="toggle-btn" data-gender="female" id="btnFemale">女</button></div></div>
+      </div>
+      <button class="submit-btn" id="submitBtn">推演命盘</button>
+    </div>
+
+    <div class="loading-screen hidden" id="loadingScreen"><div class="loading-spin"></div><p id="loadingText">推演天机...</p></div>
+    <div class="results hidden" id="results"><div class="report" id="reportContent"></div><div class="edit-section"><button class="edit-btn" id="editBtn">← 重新输入</button></div></div>
+    <footer class="footer"><p>命理之说，仅供参考。命运掌握在自己手中。</p></footer>
+  </div>
+
+  <script src="../js/calendar.js"></script>
+  <script src="../js/bazi-core.js"></script>
+  <script src="../js/gods-stars.js"></script>
+  <script src="../js/dayun.js"></script>
+  <script src="js/linewaves-bg.js"></script>
+  <script>
+  (function() {
+    'use strict';
+    var Core=window.BaziCore, Calendar=window.BaziCalendar, Gods=window.GodsStars, DaYun=window.DaYun;
+    var $=function(id){return document.getElementById(id);};
+    var API_KEY='sk-32ae8ceae83a4502b115282ef8a95882', API_URL='https://api.deepseek.com/v1/chat/completions';
+
+    LineWaves.init($('bgCanvas'), {speed:0.25,innerLineCount:36,outerLineCount:42,warpIntensity:1.0,rotation:-42,brightness:0.15,colorCycleSpeed:0.8,color1:'#ffffff',color2:'#d0c8f0',color3:'#a090d0',enableMouse:true,mouseInfluence:1.5});
+
+    var bazi=null, gender='male', calType='solar';
+
+    // Toggles
+    $('btnSolar').addEventListener('click',function(){calType='solar';$('btnSolar').classList.add('active');$('btnLunar').classList.remove('active');$('solarInputs').classList.remove('hidden');$('lunarInputs').classList.add('hidden');});
+    $('btnLunar').addEventListener('click',function(){calType='lunar';$('btnLunar').classList.add('active');$('btnSolar').classList.remove('active');$('solarInputs').classList.add('hidden');$('lunarInputs').classList.remove('hidden');uLunar();});
+    $('btnMale').addEventListener('click',function(){gender='male';$('btnMale').classList.add('active');$('btnFemale').classList.remove('active');});
+    $('btnFemale').addEventListener('click',function(){gender='female';$('btnFemale').classList.add('active');$('btnMale').classList.remove('active');});
+
+    function uLunar(){var y=parseInt($('lunarYear').value)||2006,m=Calendar.getLunarMonths(y),s=$('lunarMonth');s.innerHTML='';m.forEach(function(x){var o=document.createElement('option');o.value=x.num+(x.isLeap?'_leap':'');o.textContent=(x.isLeap?'闰':'')+x.num+'月 ('+x.days+'天)';s.appendChild(o);});uLunarDays();}
+    function uLunarDays(){var y=parseInt($('lunarYear').value)||2006,mv=$('lunarMonth').value,ms=Calendar.getLunarMonths(y),ds=$('lunarDay'),sm=null;ms.forEach(function(x){if((x.num+(x.isLeap?'_leap':''))===mv)sm=x;});if(!sm)sm=ms[0];ds.innerHTML='';var dn=['','初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];for(var d=1;d<=sm.days;d++){var o=document.createElement('option');o.value=d;o.textContent=dn[d]||d;ds.appendChild(o);}}
+    $('lunarYear').addEventListener('change',uLunar);$('lunarMonth').addEventListener('change',uLunarDays);uLunar();
+
+    function getBirth(){var y,m,d;if(calType==='solar'){y=parseInt($('solarYear').value)||2006;m=parseInt($('solarMonth').value)||5;d=parseInt($('solarDay').value)||17;}else{var ly=parseInt($('lunarYear').value)||2006,mv=$('lunarMonth').value,il=mv.indexOf('_leap')>=0,lm=parseInt(mv),ld=parseInt($('lunarDay').value)||1;var sol=Calendar.lunarToSolar(ly,lm,ld,il);if(!sol){alert('农历转换失败');return null;}y=sol.year;m=sol.month;d=sol.day;}var maxD=Calendar.daysInMonth(y,m);if(d<1)d=1;if(d>maxD)d=maxD;return {year:y,month:m,day:d,hourBranchIndex:parseInt($('birthHour').value)||0};}
+
+    function buildProfile(birth) {
+      var b=Core.calculateBazi(birth.year,birth.month,birth.day,birth.hourBranchIndex);
+      var et=Core.tallyFiveElements(b),ea=Gods.analyzeElementBalance(et,b),st=Core.assessDayMasterStrength(b,et);
+      var tg=Gods.getAllTenGods(b),ss=Gods.calculateShenSha(b),pt=Gods.analyzePattern(b,tg,st);
+      var ys=b.year.stem,dy=DaYun.calculateDaYun(birth.year,birth.month,birth.day,gender,ys,{stem:b.month.stem,branch:b.month.branch});
+      var now=new Date(),bd=new Date(birth.year,birth.month-1,birth.day),age=now.getFullYear()-bd.getFullYear();
+      if(now.getMonth()<bd.getMonth()||(now.getMonth()===bd.getMonth()&&now.getDate()<bd.getDate()))age--;
+      var cd=DaYun.getCurrentDaYun(dy,age),ln=DaYun.calculateLiuNian(2026),lna=DaYun.analyzeLiuNianInteraction(b,ln,cd);
+      bazi=b;bazi.elementsTally=et;bazi.elementAnalysis=ea;bazi.strength=st;bazi.tenGods=tg;bazi.shensha=ss;
+      bazi.pattern=pt;bazi.dayun=dy;bazi.age=age;bazi.currentDayun=cd;bazi.liuNian=ln;bazi.liuNianAnalysis=lna;
+      bazi.birth=birth;bazi.ageVal=age;
+      function se(c){for(var i=0;i<Core.STEMS.length;i++)if(Core.STEMS[i].char===c)return Core.STEMS[i].element;return'?';}
+      function fh(bc){var hs=Core.HIDDEN_STEMS[bc]||[];return hs.map(function(h){return h.stem+'('+se(h.stem)+')';}).join(' ');}
+      var p=[];var hb=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+      p.push('出生：公历'+birth.year+'年'+birth.month+'月'+birth.day+'日 '+hb[birth.hourBranchIndex]+'时 '+gender);
+      p.push('八字四柱：年'+b.year.stem.char+b.year.branch.char+' 月'+b.month.stem.char+b.month.branch.char+' 日'+b.day.stem.char+b.day.branch.char+' 时'+b.hour.stem.char+b.hour.branch.char);
+      p.push('日主：'+b.day.stem.char+'（五行属'+b.day.stem.element+'，'+b.day.stem.yinYang+'性），坐'+b.day.branch.char+'（羊刃/帝旺）');
+      p.push('月令：'+b.month.branch.char+'月，主气为'+se(Core.HIDDEN_STEMS[b.month.branch.char][0].stem)+'，格局：'+pt.primaryPattern+(pt.specialPatterns.length?' / '+pt.specialPatterns.join(' / '):''));
+      p.push('日主强弱：'+st.level+'（评分'+(st.score*100).toFixed(0)+'分），用神（喜神）：'+st.favorable.join('、')+'，忌神：'+st.unfavorable.join('、'));
+      p.push('五行分布：'+ea.map(function(x){return x.element+x.percentage.toFixed(0)+'%('+x.status+')';}).join(' '));
+      p.push('十神配置：年干'+b.year.stem.char+'='+tg.year.stemGod+' 月干'+b.month.stem.char+'='+tg.month.stemGod+' 日干='+b.day.stem.char+'(日主) 时干'+b.hour.stem.char+'='+tg.hour.stemGod);
+      p.push('地支十神：年支='+tg.year.branchGod+' 月支='+tg.month.branchGod+' 日支='+tg.day.branchGod+' 时支='+tg.hour.branchGod);
+      p.push('藏干：年'+fh(b.year.branch.char)+' 月'+fh(b.month.branch.char)+' 日'+fh(b.day.branch.char)+' 时'+fh(b.hour.branch.char));
+      p.push('纳音：'+b.year.nayin+' '+b.month.nayin+' '+b.day.nayin+' '+b.hour.nayin);
+      if(ss.length>0)p.push('神煞：'+ss.map(function(x){return x.name+'（'+(x.type==='auspicious'?'吉':x.type==='inauspicious'?'凶':'中')+'）';}).join('、'));
+      p.push('大运起运：'+dy.startAge+'岁，排运方向='+dy.direction+'，当前年龄='+age+'岁');
+      dy.pillars.forEach(function(d,i){var tg2=Gods.getTenGod(b.day.stem,d.stem),cur=(age>=d.ageStart&&age<=d.ageEnd);p.push(' 第'+(i+1)+'步大运：'+d.stem.char+d.branch.char+'（十神='+tg2+'，纳音='+d.nayin+'，'+d.ageStart+'-'+d.ageEnd+'岁）'+(cur?' ← 当前所在大运':''));});
+      var yrs=DaYun.scoreMultipleYears(b,dy,age,birth.year,birth.month,birth.day,6);
+      p.push('未来流年评分：');
+      yrs.forEach(function(y){p.push('  '+y.year+'年（'+y.liuNian.stem.char+y.liuNian.branch.char+'年）：流年十神='+y.tenGod+'，综合评分='+y.score+'分，评级='+y.rating+' | 感情'+y.categories.love.score+' 事业'+y.categories.career.score+' 财运'+y.categories.wealth.score+' 健康'+y.categories.health.score);if(y.highlights.length)p.push('    吉兆：'+y.highlights.join('；'));if(y.warnings.length)p.push('    凶兆：'+y.warnings.join('；'));});
+      return {bazi:b,profile:p.join('\n')};
+    }
+
+    function callAI(sys,usr){return new Promise(function(ok,fail){var x=new XMLHttpRequest();x.open('POST',API_URL,true);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('Authorization','Bearer '+API_KEY);x.timeout=90000;x.onload=function(){if(x.status>=200&&x.status<300){var d=JSON.parse(x.responseText);if(d.choices&&d.choices[0])ok(d.choices[0].message.content);else fail(new Error('API异常'));}else fail(new Error('HTTP '+x.status));};x.onerror=function(){fail(new Error('网络错误'));};x.ontimeout=function(){fail(new Error('超时'));};x.send(JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:sys},{role:'user',content:usr}],temperature:0.9,max_tokens:6000,top_p:0.95}));});}
+
+    function renderAI(text) {
+      // Strip AI preface/greeting lines
+      text = text.replace(/^.*?(?:好的|遵照|以下是|根据|我来|让我|现在).*?\n/,'');
+      text = text.replace(/^\s*\n+/,'');
+
+      var h='';
+      var secs=text.split(/\n(?=##\s)/);
+      secs.forEach(function(sec){
+        sec=sec.trim();if(!sec)return;
+        h+='<div class="report-card">';
+        var lines=sec.split('\n'),inT=false,tH='',inL=false;
+        lines.forEach(function(l){
+          l=l.trim();if(!l){if(inT){h+=tH+'</table>';tH='';inT=false;}if(inL){h+='</ul>';inL=false;}return;}
+          if(/^##\s/.test(l)){h+='<h2>'+l.replace(/^##\s*/,'')+'</h2>';return;}
+          if(/^###\s/.test(l)){h+='<h3>'+l.replace(/^###\s*/,'')+'</h3>';return;}
+          if(/^####\s/.test(l)){h+='<h4>'+l.replace(/^####\s*/,'')+'</h4>';return;}
+          if(/^[\-\*]\s/.test(l)){if(!inL){h+='<ul>';inL=true;}h+='<li>'+l.replace(/^[\-\*]\s*/,'')+'</li>';return;}
+          if(l.indexOf('|')>=0&&l.indexOf('---')<0){if(inL){h+='</ul>';inL=false;}if(!inT){tH='<table class="pillars-table">';inT=true;}var cs=l.split('|').map(function(c){return c.trim();}).filter(function(c){return c;});var ih=/^\*\*/.test(cs[0]||'');tH+='<tr>';cs.forEach(function(c){c=c.replace(/\*\*/g,'');tH+=ih?'<th>'+c+'</th>':'<td>'+c+'</td>';});tH+='</tr>';return;}
+          if(inL){h+='</ul>';inL=false;}
+          var lp=l.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+          h+='<p>'+lp+'</p>';
+        });
+        if(inT){h+=tH+'</table>';}if(inL){h+='</ul>';}
+        h+='</div>';
+        // Ornament divider between cards
+        h+='<div class="ornament">◆</div>';
+      });
+      return h;
+    }
+
+    $('submitBtn').addEventListener('click',function(){
+      var birth=getBirth();if(!birth)return;
+      $('inputSection').classList.add('hidden');$('loadingScreen').classList.remove('hidden');$('results').classList.add('hidden');
+      var result=buildProfile(birth);bazi=result.bazi;
+
+      var sys='你是一位精通子平八字与紫微斗数的命理分析师。你的任务是基于命盘数据进行客观、精准、详尽的命理分析。\n\n你的准则：\n1. 所有断语必须从命盘的具体干支、十神、五行生克出发，绝不泛泛而谈。\n2. 专业术语（十神、格局、用神忌神、刑冲合害、夫妻宫、财星官星、纳音、藏干、羊刃、禄等）自然融入文中，无需刻意解释，保持行文流畅。\n3. 分析结构清晰：先陈述命盘事实，再推导逻辑链条，最后给出结论。\n4. 数据优先：五行比例、十神分布、大运起运年龄等定量信息是分析的基础。\n5. 时间线用表格呈现，逐年运势每年独立成段，标注干支和年龄。\n6. 避免煽情、避免恐吓、避免空洞的鼓励。只说命盘呈现的事实和基于事实的推论。\n7. 文风：冷静、专业、详实。像一份深度研究报告，不是街头算命。';
+
+      var usr='以下是命主的完整八字命盘数据：\n\n'+result.profile+'\n\n请基于以上数据，输出一份完整的命理分析报告。结构如下，总字数4000以上。\n\n## 一、八字命盘\n\n四柱表格：\n| | 年柱 | 月柱 | 日柱 | 时柱 |\n|---|---|---|---|---|\n| **天干** | X（十神） | X（十神） | **X（日主）** | X（十神） |\n| **地支** | X | X | **X** | X |\n| **藏干** | XXX | XXX | XXX | XXX |\n| **纳音** | XXX | XXX | XXX | XXX |\n\n日主概述：日主五行、月令状态、坐支、全局五行偏枯情况、格局、用神忌神。\n\n## 二、性格分析\n\n根据日主五行、地支组合（羊刃/禄/刑冲合害）、十神配置，分析命主的性格特征。正面和负面都要涉及，每个结论都要有对应的干支依据。\n\n## 三、亲情与原生家庭\n\n年柱月柱对应的父母宫位分析。父母各自的性格、家庭氛围、童年环境。结合十神（正印偏印→母亲，偏财正财→父亲）说明。大运对家庭的影响及关键年龄节点。\n\n## 四、感情婚姻\n\n夫妻宫（日支）的五行、十神、神煞分析。感情中的行为模式和潜在问题。感情时间线表格：\n| 年龄 | 年份 | 流年干支 | 十神 | 事件 |\n|---|---|---|---|---|\n\n## 五、财运分析\n\n财星分布、透干情况、是否有根。格局与财运的关系。财富积累路径和潜在风险。财运时间线表格。\n\n## 六、健康分析\n\n五行偏枯与脏腑对应表：\n| 五行 | 状态 | 旺/弱 | 对应脏腑 |\n|---|---|---|---|\n\n具体健康风险及关键年份预警。\n\n## 七、人际关系\n\n社交模式、职场关系特点。结合十神和五行分析。\n\n## 八、逐年运势\n\n每年独立成段，格式：\n#### 20XX年 XX年（X岁）\n干支组合 + 十神作用 + 各领域（事业/感情/财运/健康）的具体影响。每年80-150字。重要年份末尾标注 ⭐。\n\n## 九、大运走势\n\n每步大运的核心主题（一句话概括），标注关键转折点。\n\n## 十、建议\n\n基于命盘用神忌神，给出具体的调候建议：五行补救方向、宜忌行业、方位、颜色。重要的人生决策节点。\n\n格式要求：markdown，表格对齐，逐年运势每年独立一段，保持客观冷静的叙述语气。';
+
+      $('loadingText').textContent='正在排盘推演...';
+      setTimeout(function(){
+        $('loadingText').textContent='AI 正在精算命格...';
+        callAI(sys,usr).then(function(raw){
+          $('loadingScreen').classList.add('hidden');$('results').classList.remove('hidden');
+          $('reportContent').innerHTML=renderAI(raw);
+          $('results').scrollIntoView({behavior:'smooth',block:'start'});
+        }).catch(function(err){
+          console.error(err);
+          $('loadingScreen').classList.add('hidden');
+          renderFallback(bazi);
+          $('results').classList.remove('hidden');
+          $('results').scrollIntoView({behavior:'smooth',block:'start'});
+        });
+      },500);
+    });
+
+    function renderFallback(b){
+      var st=b.strength,pt=b.pattern,ea=b.elementAnalysis,ss=b.shensha,tg=b.tenGods,dy=b.dayun,a=b.age;
+      var EC={'木':'#5ab87a','火':'#e05555','土':'#c9a840','金':'#c8ccd4','水':'#5a8ac0'};
+      var EK={'木':'wood','火':'fire','土':'earth','金':'metal','水':'water'};
+      var C=function(t,bd){return '<div class="report-card"><h2>'+t+'</h2>'+bd+'</div>';};
+      var h='';
+
+      var p1='<table class="pillars-table"><tr><th></th><th>年柱</th><th>月柱</th><th>日柱</th><th>时柱</th></tr>';
+      p1+='<tr><td>天干</td><td>'+b.year.stem.char+'（'+tg.year.stemGod+'）</td><td>'+b.month.stem.char+'（'+tg.month.stemGod+'）</td><td class="dm-cell">'+b.day.stem.char+'（日主）</td><td>'+b.hour.stem.char+'（'+tg.hour.stemGod+'）</td></tr>';
+      p1+='<tr><td>地支</td><td>'+b.year.branch.char+'</td><td>'+b.month.branch.char+'</td><td class="dm-cell">'+b.day.branch.char+'</td><td>'+b.hour.branch.char+'</td></tr>';
+      p1+='<tr><td>藏干</td><td>'+b.year.hiddenStems.map(function(h){return h.stem;}).join(' ')+'</td><td>'+b.month.hiddenStems.map(function(h){return h.stem;}).join(' ')+'</td><td class="dm-cell">'+b.day.hiddenStems.map(function(h){return h.stem;}).join(' ')+'</td><td>'+b.hour.hiddenStems.map(function(h){return h.stem;}).join(' ')+'</td></tr>';
+      p1+='<tr><td>纳音</td><td>'+b.year.nayin+'</td><td>'+b.month.nayin+'</td><td class="dm-cell">'+b.day.nayin+'</td><td>'+b.hour.nayin+'</td></tr>';
+      p1+='</table>';
+      p1+='<p>日主<strong>'+b.day.stem.char+'</strong>（五行属'+b.day.stem.element+'），生于<strong>'+b.month.branch.char+'月</strong>。'+pt.description+'</p>';
+      h+=C('一、八字命盘',p1);
+
+      var p2='<p>日主综合评定：<strong>'+st.level+'</strong>（'+(st.score*100).toFixed(0)+'分）。用神：<strong style="color:'+(EC[st.favorable[0]]||'var(--gold-light)')+'">'+st.favorable.join('、')+'</strong>。忌神：<strong style="color:var(--red)">'+st.unfavorable.join('、')+'</strong>。</p>';
+      p2+='<div class="elem-bars">';
+      ea.forEach(function(x){p2+='<div class="elem-row"><span class="elem-icon" style="color:'+EC[x.element]+'">'+x.element+'</span><div class="elem-track"><div class="elem-fill '+EK[x.element]+'" style="width:'+x.percentage+'%"></div></div><span class="elem-pct">'+x.status+'</span></div>';});
+      p2+='</div>';
+      if(ss.length>0){p2+='<div class="tag-row">';ss.forEach(function(s){p2+='<span class="tag '+(s.type==='auspicious'?'good':'warn')+'">'+s.name+'</span>';});p2+='</div>';}
+      h+=C('二、格局诊断 & 五行分布',p2);
+
+      var p3='<p>起运年龄：<strong>'+dy.startAge+'岁</strong> · '+dy.direction+' · 当前<strong>'+a+'岁</strong></p><div class="timeline">';
+      dy.pillars.forEach(function(d){var tg2=Gods.getTenGod(b.day.stem,d.stem),cur=(a>=d.ageStart&&a<=d.ageEnd);p3+='<div class="tl-item'+(cur?'" style="background:rgba(240,216,120,0.04)"':'')+'"><span class="tl-year">'+d.stem.char+d.branch.char+'</span><span class="tl-text">'+tg2+' · '+d.ageStart+'-'+d.ageEnd+'岁 · '+d.nayin+(cur?' <strong style="color:var(--gold-light)">◀ 当前大运</strong>':'')+'</span></div>';});
+      p3+='</div>';
+      h+=C('三、大运走势',p3);
+
+      h='<div class="report-card"><div class="highlight-box"><p>AI 深度推演暂不可用，以上为基础命盘数据。请检查网络后重试。</p></div></div>'+h;
+      $('reportContent').innerHTML=h;
+    }
+
+    $('editBtn').addEventListener('click',function(){$('results').classList.add('hidden');$('inputSection').classList.remove('hidden');$('inputSection').scrollIntoView({behavior:'smooth'});});
+  })();
+  </script>
+</body>
+</html>

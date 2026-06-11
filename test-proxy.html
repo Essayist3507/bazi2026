@@ -1,0 +1,7 @@
+<!DOCTYPE html><html><body>
+<h1>代理测试</h1>
+<div id="r">测试中...</div>
+<script>
+fetch('http://localhost:3456/proxy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer sk-77dace56e64540908167f21f094c19d5'},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:'用中文说 你好世界'}],max_tokens:20})}).then(r=>r.json()).then(d=>{document.getElementById('r').textContent='成功: '+d.choices[0].message.content;}).catch(e=>{document.getElementById('r').textContent='失败: '+e.message;});
+</script>
+</body></html>

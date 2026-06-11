@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>子平八字 · 命理预测</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- WebGL Background container -->
+  <div id="liquidBg"></div>
+
+  <div class="container">
+
+    <!-- ===== GATE: No Token (Paywall) ===== -->
+    <div class="gate-screen" id="gateNoToken">
+      <header class="header">
+        <h1 class="title">子平八字</h1>
+        <p class="subtitle">洞悉天机 · 知命改运 · 趋吉避凶</p>
+      </header>
+
+      <div class="glass-card gate-screen">
+        <span class="gate-icon">🔮</span>
+        <h2>专属命理预测</h2>
+        <p>基于<span class="highlight">子平八字</span>真传体系，结合<span class="highlight">AI 深度推演</span>，为您揭示：
+          <br>逐年运势 · 爱情姻缘 · 财运事业 · 健康平安</p>
+        <p>每位用户的命盘均为<span class="highlight">独立专析</span>，因人而异，千人千面。</p>
+
+        <!-- Manual token input -->
+        <div style="max-width:340px;margin:20px auto">
+          <input type="text" id="manualToken" placeholder="输入你的专属令牌" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;color:var(--text);font-size:0.9rem;outline:none;text-align:center;letter-spacing:0.1em">
+          <button class="generate-btn" id="useTokenBtn" style="width:100%;margin-top:10px">使用令牌</button>
+          <p id="tokenError" style="color:var(--red);font-size:0.74rem;margin-top:8px;display:none">令牌无效或已使用</p>
+        </div>
+
+        <div class="wechat-info" style="margin-top:20px">
+          获取预测权限，请联系客服微信
+        </div>
+        <p style="font-size:0.78rem;color:var(--text-muted)">付费后将收到专属一次性链接</p>
+      </div>
+    </div>
+
+    <!-- ===== GATE: Token Expired ===== -->
+    <div class="gate-screen expired hidden" id="gateExpired">
+      <header class="header">
+        <h1 class="title">子平八字</h1>
+        <p class="subtitle">洞悉天机 · 知命改运 · 趋吉避凶</p>
+      </header>
+
+      <div class="glass-card gate-screen expired">
+        <span class="gate-icon">⏳</span>
+        <h2>此链接已失效</h2>
+        <p>您的专属预测链接<span class="highlight">已被使用</span>。</p>
+        <p>每个链接仅可使用一次，如需再次预测，请联系客服获取新的链接。</p>
+        <div class="wechat-info">联系客服微信获取新链接</div>
+      </div>
+    </div>
+
+    <!-- ===== LOADING SCREEN ===== -->
+    <div class="loading-screen hidden" id="loadingScreen">
+      <header class="header">
+        <h1 class="title">子平八字</h1>
+        <p class="subtitle">洞悉天机 · 知命改运 · 趋吉避凶</p>
+      </header>
+      <div class="loading-spinner"></div>
+      <p>正在为您推演天机...</p>
+    </div>
+
+    <!-- ===== MAIN APP (valid token) ===== -->
+    <div class="app-content hidden" id="appContent">
+
+      <header class="header">
+        <h1 class="title">子平八字</h1>
+        <p class="subtitle">洞悉天机 · 知命改运 · 趋吉避凶</p>
+        <div class="token-badge" id="tokenBadge">专属通道</div>
+      </header>
+
+      <!-- Input Section -->
+      <section class="input-section" id="inputSection">
+        <div class="glass-card">
+          <div class="calendar-toggle">
+            <button class="toggle-btn active" data-calendar="solar" id="btnSolar">公历（阳历）</button>
+            <button class="toggle-btn" data-calendar="lunar" id="btnLunar">农历（阴历）</button>
+          </div>
+
+          <div class="date-inputs" id="solarInputs">
+            <div class="input-group">
+              <label>出生年份</label>
+              <input type="number" id="solarYear" placeholder="1990" min="1900" max="2100" value="1990">
+            </div>
+            <div class="input-group">
+              <label>出生月份</label>
+              <select id="solarMonth">
+                <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                <option value="4">4月</option><option value="5" selected>5月</option><option value="6">6月</option>
+                <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>出生日期</label>
+              <input type="number" id="solarDay" placeholder="20" min="1" max="31" value="20">
+            </div>
+          </div>
+
+          <div class="date-inputs hidden" id="lunarInputs">
+            <div class="input-group">
+              <label>农历年份</label>
+              <input type="number" id="lunarYear" placeholder="1990" min="1900" max="2100" value="1990">
+            </div>
+            <div class="input-group">
+              <label>农历月份</label>
+              <select id="lunarMonth"></select>
+            </div>
+            <div class="input-group">
+              <label>农历日期</label>
+              <select id="lunarDay"></select>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="input-group">
+              <label>出生时辰</label>
+              <select id="birthHour">
+                <option value="0">子时 (23:00-01:00)</option>
+                <option value="1">丑时 (01:00-03:00)</option>
+                <option value="2">寅时 (03:00-05:00)</option>
+                <option value="3">卯时 (05:00-07:00)</option>
+                <option value="4">辰时 (07:00-09:00)</option>
+                <option value="5">巳时 (09:00-11:00)</option>
+                <option value="6">午时 (11:00-13:00)</option>
+                <option value="7" selected>未时 (13:00-15:00)</option>
+                <option value="8">申时 (15:00-17:00)</option>
+                <option value="9">酉时 (17:00-19:00)</option>
+                <option value="10">戌时 (19:00-21:00)</option>
+                <option value="11">亥时 (21:00-23:00)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>性别</label>
+              <div class="gender-toggle">
+                <button class="toggle-btn active" data-gender="male" id="btnMale">男</button>
+                <button class="toggle-btn" data-gender="female" id="btnFemale">女</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="submit-btn" id="submitBtn">推演命盘</button>
+        </div>
+      </section>
+
+      <!-- Results Container -->
+      <div class="results hidden" id="results">
+        <section class="pillars-section">
+          <h2 class="section-title">八字排盘</h2>
+          <div class="pillars-grid" id="pillarsGrid"></div>
+        </section>
+
+        <section class="elements-section">
+          <h2 class="section-title">五行分布</h2>
+          <div class="elements-content" id="elementsContent"></div>
+        </section>
+
+        <section class="gods-section">
+          <h2 class="section-title">十神总览</h2>
+          <div class="ten-gods-table" id="tenGodsTable"></div>
+        </section>
+
+        <section class="shensha-section">
+          <h2 class="section-title">神煞</h2>
+          <div class="shensha-grid" id="shenshaGrid"></div>
+        </section>
+
+        <section class="dayun-section">
+          <h2 class="section-title">大运流年</h2>
+          <div class="dayun-info" id="dayunInfo"></div>
+          <div class="dayun-timeline" id="dayunTimeline"></div>
+        </section>
+
+        <section class="liunian-section">
+          <h2 class="section-title">流年分析</h2>
+          <div class="liunian-content" id="liunianContent"></div>
+        </section>
+
+        <section class="predictions-section">
+          <h2 class="section-title">命理预测</h2>
+          <div class="pred-tabs" id="predTabs">
+            <button class="pred-tab active" data-tab="yearly">逐年运势</button>
+            <button class="pred-tab" data-tab="love">爱情姻缘</button>
+            <button class="pred-tab" data-tab="wealth">财运事业</button>
+            <button class="pred-tab" data-tab="health">健康平安</button>
+            <button class="pred-tab" data-tab="caution">近期注意</button>
+            <button class="pred-tab" data-tab="advice">当前建议</button>
+          </div>
+          <div class="pred-content" id="predContent"></div>
+        </section>
+
+        <div class="edit-section">
+          <button class="edit-btn" id="editBtn">重新输入</button>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>命理之说，仅供参考。命运掌握在自己手中。</p>
+        <p class="footer-disclaimer">本网站内容仅供娱乐参考，不构成任何人生决策建议。</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Core libraries (reused from free version) -->
+  <script src="../js/calendar.js"></script>
+  <script src="../js/bazi-core.js"></script>
+  <script src="../js/gods-stars.js"></script>
+  <script src="../js/dayun.js"></script>
+  <script src="../js/predictions.js"></script>
+  <script src="../js/deepseek.js"></script>
+
+  <!-- Paid version scripts -->
+  <script src="js/liquid-chrome.js"></script>
+  <script src="js/token-manager.js"></script>
+
+  <!-- App Logic (adapted for paid version) -->
+  <script>
+  (function() {
+    'use strict';
+
+    var Core = window.BaziCore;
+    var Calendar = window.BaziCalendar;
+    var Gods = window.GodsStars;
+    var DaYun = window.DaYun;
+    var Predictions = window.Predictions;
+    var TM = window.TokenManager;
+
+    var $ = function(id) { return document.getElementById(id); };
+
+    // ─── Token Gate ───
+    var token = TM.getTokenFromURL();
+
+    function tryToken(tok) {
+      if (!tok) return false;
+      if (TM.isTokenUsed(tok)) {
+        $('gateNoToken').classList.add('hidden');
+        $('appContent').classList.add('hidden');
+        $('gateExpired').classList.remove('hidden');
+        if (!window._bgInited) { LiquidChrome.init($('liquidBg'), { baseColor: [0.06, 0.04, 0.04] }); window._bgInited = true; }
+        return false;
+      }
+      TM.markUsed(tok);
+      $('gateNoToken').classList.add('hidden');
+      $('gateExpired').classList.add('hidden');
+      $('appContent').classList.remove('hidden');
+      if (!window._bgInited) { LiquidChrome.init($('liquidBg'), { baseColor: [0.07, 0.07, 0.08], speed: 0.2, amplitude: 0.25, interactive: true }); window._bgInited = true; }
+      initApp();
+      return true;
+    }
+
+    if (token) {
+      tryToken(token);
+    } else {
+      // No token — show paywall with manual input
+      $('gateNoToken').classList.remove('hidden');
+      LiquidChrome.init($('liquidBg'), { baseColor: [0.06, 0.06, 0.06] });
+      window._bgInited = true;
+
+      // Manual token input handler
+      var useTokenBtn = $('useTokenBtn');
+      var manualToken = $('manualToken');
+      var tokenError = $('tokenError');
+      if (useTokenBtn && manualToken) {
+        useTokenBtn.addEventListener('click', function() {
+          var tok = manualToken.value.trim();
+          if (!tryToken(tok)) {
+            tokenError.style.display = 'block';
+          } else {
+            tokenError.style.display = 'none';
+          }
+        });
+        manualToken.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') useTokenBtn.click();
+        });
+      }
+    }
+
+    // ─── App Initialization ───
+    var currentBazi = null;
+    var currentPredictions = null;
+    var gender = 'male';
+    var calendarType = 'solar';
+    var activeTab = 'yearly';
+
+    function initApp() {
+      // Calendar toggle
+      $('btnSolar').addEventListener('click', function() {
+        calendarType = 'solar';
+        $('btnSolar').classList.add('active'); $('btnLunar').classList.remove('active');
+        $('solarInputs').classList.remove('hidden'); $('lunarInputs').classList.add('hidden');
+      });
+      $('btnLunar').addEventListener('click', function() {
+        calendarType = 'lunar';
+        $('btnLunar').classList.add('active'); $('btnSolar').classList.remove('active');
+        $('solarInputs').classList.add('hidden'); $('lunarInputs').classList.remove('hidden');
+        updateLunarInputs();
+      });
+
+      // Gender toggle
+      $('btnMale').addEventListener('click', function() { gender = 'male'; $('btnMale').classList.add('active'); $('btnFemale').classList.remove('active'); });
+      $('btnFemale').addEventListener('click', function() { gender = 'female'; $('btnFemale').classList.add('active'); $('btnMale').classList.remove('active'); });
+
+      // Lunar inputs
+      $('lunarYear').addEventListener('change', updateLunarInputs);
+      $('lunarMonth').addEventListener('change', updateLunarDays);
+      updateLunarInputs();
+
+      // Submit
+      $('submitBtn').addEventListener('click', handleSubmit);
+
+      // Edit
+      $('editBtn').addEventListener('click', function() {
+        $('results').classList.add('hidden');
+        $('inputSection').classList.remove('hidden');
+        $('inputSection').scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // Prediction tabs
+      document.querySelectorAll('.pred-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('.pred-tab').forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          activeTab = tab.getAttribute('data-tab');
+          renderPredictions(activeTab);
+        });
+      });
+    }
+
+    function updateLunarInputs() {
+      var year = parseInt($('lunarYear').value) || 1990;
+      var months = Calendar.getLunarMonths(year);
+      var monthSel = $('lunarMonth');
+      monthSel.innerHTML = '';
+      months.forEach(function(m) {
+        var opt = document.createElement('option');
+        opt.value = m.num + (m.isLeap ? '_leap' : '');
+        opt.textContent = (m.isLeap ? '闰' : '') + m.num + '月 (' + m.days + '天)';
+        monthSel.appendChild(opt);
+      });
+      updateLunarDays();
+    }
+
+    function updateLunarDays() {
+      var year = parseInt($('lunarYear').value) || 1990;
+      var monthVal = $('lunarMonth').value;
+      var months = Calendar.getLunarMonths(year);
+      var daySel = $('lunarDay');
+      var selectedMonth = null;
+      months.forEach(function(m) {
+        if ((m.num + (m.isLeap ? '_leap' : '')) === monthVal) selectedMonth = m;
+      });
+      if (!selectedMonth) selectedMonth = months[0];
+      daySel.innerHTML = '';
+      for (var d = 1; d <= selectedMonth.days; d++) {
+        var opt = document.createElement('option');
+        opt.value = d;
+        var dayNames = ['','初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+        opt.textContent = dayNames[d] || d;
+        daySel.appendChild(opt);
+      }
+    }
+
+    function getBirthDate() {
+      var year, month, day;
+      if (calendarType === 'solar') {
+        year = parseInt($('solarYear').value) || 1990;
+        month = parseInt($('solarMonth').value) || 1;
+        day = parseInt($('solarDay').value) || 1;
+      } else {
+        var lYear = parseInt($('lunarYear').value) || 1990;
+        var monthVal = $('lunarMonth').value;
+        var isLeap = monthVal.indexOf('_leap') >= 0;
+        var lMonth = parseInt(monthVal);
+        var lDay = parseInt($('lunarDay').value) || 1;
+        var solar = Calendar.lunarToSolar(lYear, lMonth, lDay, isLeap);
+        if (!solar) { alert('农历转换失败，请检查输入日期'); return null; }
+        year = solar.year; month = solar.month; day = solar.day;
+      }
+      var maxDay = Calendar.daysInMonth(year, month);
+      if (day < 1) day = 1; if (day > maxDay) day = maxDay;
+      return { year: year, month: month, day: day, hourBranchIndex: parseInt($('birthHour').value) || 0 };
+    }
+
+    function handleSubmit() {
+      var birth = getBirthDate();
+      if (!birth) return;
+
+      $('inputSection').classList.add('hidden');
+      $('loadingScreen').classList.remove('hidden');
+      $('results').classList.add('hidden');
+
+      setTimeout(function() {
+        performCalculation(birth).then(function() {
+          $('loadingScreen').classList.add('hidden');
+          $('results').classList.remove('hidden');
+          renderAll();
+          $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }).catch(function(err) {
+          console.error('Calculation failed:', err);
+          $('loadingScreen').classList.add('hidden');
+          alert('推演失败，请稍后重试');
+          $('inputSection').classList.remove('hidden');
+        });
+      }, 400);
+    }
+
+    function performCalculation(birth) {
+      // Base calculation (sync)
+      currentBazi = Core.calculateBazi(birth.year, birth.month, birth.day, birth.hourBranchIndex);
+      currentBazi.elementsTally = Core.tallyFiveElements(currentBazi);
+      currentBazi.elementAnalysis = Gods.analyzeElementBalance(currentBazi.elementsTally, currentBazi);
+      currentBazi.strength = Core.assessDayMasterStrength(currentBazi, currentBazi.elementsTally);
+      currentBazi.tenGods = Gods.getAllTenGods(currentBazi);
+      currentBazi.shensha = Gods.calculateShenSha(currentBazi);
+      currentBazi.pattern = Gods.analyzePattern(currentBazi, currentBazi.tenGods, currentBazi.strength);
+      currentBazi.fateSummary = Gods.generateFateSummary(currentBazi, currentBazi.tenGods, currentBazi.strength, currentBazi.pattern, currentBazi.shensha, currentBazi.elementAnalysis);
+
+      var yearStem = currentBazi.year.stem;
+      currentBazi.dayun = DaYun.calculateDaYun(birth.year, birth.month, birth.day, gender, yearStem, { stem: currentBazi.month.stem, branch: currentBazi.month.branch });
+
+      var today = new Date();
+      var birthDate = new Date(birth.year, birth.month - 1, birth.day);
+      var age = today.getFullYear() - birthDate.getFullYear();
+      if (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) age--;
+      currentBazi.age = age;
+      currentBazi.currentDayun = DaYun.getCurrentDaYun(currentBazi.dayun, age);
+      currentBazi.liuNian = DaYun.calculateLiuNian(2026);
+      currentBazi.liuNianAnalysis = DaYun.analyzeLiuNianInteraction(currentBazi, currentBazi.liuNian, currentBazi.currentDayun);
+      currentBazi.birth = birth;
+      currentBazi.ageVal = age;
+
+      // AI predictions with template fallback
+      return DeepSeekAI.generatePredictions(
+        currentBazi, currentBazi.strength, currentBazi.elementAnalysis,
+        currentBazi.shensha, currentBazi.dayun, currentBazi.liuNian,
+        currentBazi.liuNianAnalysis, currentBazi.ageVal, currentBazi.birth.year,
+        currentBazi.birth.month, currentBazi.birth.day, currentBazi.pattern
+      ).then(function(aiPredictions) {
+        currentPredictions = aiPredictions;
+        currentBazi.aiGenerated = true;
+      }).catch(function(err) {
+        console.warn('AI prediction failed, using template:', err.message);
+        currentPredictions = Predictions.generateAllPredictions(
+          currentBazi, currentBazi.strength, currentBazi.elementAnalysis,
+          currentBazi.shensha, currentBazi.dayun, currentBazi.liuNian,
+          currentBazi.liuNianAnalysis, currentBazi.ageVal, currentBazi.birth.year,
+          currentBazi.birth.month, currentBazi.birth.day, currentBazi.pattern
+        );
+        currentBazi.aiGenerated = false;
+      });
+    }
+
+    // ─── Render Functions ───
+    function renderAll() {
+      renderPillars();
+      renderFatePattern();
+      renderElements();
+      renderTenGods();
+      renderShenSha();
+      renderDaYun();
+      renderLiuNian();
+      renderPredictions(activeTab);
+    }
+
+    function renderPillars() {
+      var grid = $('pillarsGrid');
+      var pillars = [
+        { key: 'year', label: '年柱' },
+        { key: 'month', label: '月柱' },
+        { key: 'day', label: '日柱' },
+        { key: 'hour', label: '时柱' }
+      ];
+      grid.innerHTML = '';
+      pillars.forEach(function(p) {
+        var data = currentBazi[p.key];
+        var tenGod = currentBazi.tenGods[p.key];
+        var hiddenStems = data.hiddenStems.map(function(h) { return h.stem; }).join(' ');
+        var elemClass = 'elem-' + { '木':'wood','火':'fire','土':'earth','金':'metal','水':'water' }[data.stem.element];
+        var card = document.createElement('div');
+        card.className = 'pillar-card';
+        if (data.isDayMaster) card.classList.add('day-master');
+        card.innerHTML =
+          '<div class="pillar-label">' + p.label + '</div>' +
+          '<div class="pillar-stem">' + data.stem.char + '</div>' +
+          '<div class="pillar-branch">' + data.branch.char + '</div>' +
+          '<div class="pillar-element ' + elemClass + '">' + data.stem.element + '</div>' +
+          '<div class="pillar-tengod">' + (tenGod ? tenGod.stemGod : '') + '</div>' +
+          '<div class="pillar-nayin">' + data.nayin + '</div>' +
+          '<div class="pillar-hidden">藏干: ' + hiddenStems + '</div>' +
+          (data.isDayMaster ? '<div class="pillar-day-label">日主</div>' : '');
+        grid.appendChild(card);
+      });
+    }
+
+    function renderFatePattern() {
+      var section = $('fateSection') || createFateSection();
+      var pattern = currentBazi.pattern;
+      var shensha = currentBazi.shensha;
+      var auspicious = shensha.filter(function(s) { return s.type === 'auspicious'; });
+      var inauspicious = shensha.filter(function(s) { return s.type === 'inauspicious'; });
+
+      var html = '<h2 class="section-title">命格详解</h2>';
+      html += '<div class="fate-content">';
+      html += '<div class="fate-main">';
+      html += '<div class="fate-pattern-badge">' + pattern.primaryPattern + '</div>';
+      if (pattern.specialPatterns.length > 0) {
+        html += '<div class="fate-special">' + pattern.specialPatterns.map(function(p) { return '<span class="special-tag">' + p + '</span>'; }).join('') + '</div>';
+      }
+      html += '<p class="fate-desc">' + pattern.description + '</p>';
+      html += '</div>';
+
+      html += '<div class="fate-summary"><h3>命局总论</h3><p>' + currentBazi.fateSummary + '</p></div>';
+
+      if (auspicious.length > 0) {
+        html += '<div class="fate-stars"><h4>吉神庇佑</h4>';
+        auspicious.forEach(function(s) {
+          html += '<div class="star-detail auspicious"><strong>' + s.name + '</strong><p>' + s.desc + '</p></div>';
+        });
+        html += '</div>';
+      }
+      if (inauspicious.length > 0) {
+        html += '<div class="fate-stars"><h4>需注意</h4>';
+        inauspicious.forEach(function(s) {
+          html += '<div class="star-detail warning"><strong>' + s.name + '</strong><p>' + s.desc + '</p></div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      section.innerHTML = html;
+    }
+
+    function createFateSection() {
+      var section = document.createElement('section');
+      section.id = 'fateSection';
+      var pillarsSection = document.querySelector('.pillars-section');
+      pillarsSection.parentNode.insertBefore(section, pillarsSection.nextSibling);
+      return section;
+    }
+
+    function renderElements() {
+      var content = $('elementsContent');
+      var analysis = currentBazi.elementAnalysis;
+      var ELEM_COLORS = { '木':'#5ab87a','火':'#e05555','土':'#c9a840','金':'#c8ccd4','水':'#5a8ac0' };
+      var ELEM_KEYS = { '木':'wood','火':'fire','土':'earth','金':'metal','水':'water' };
+
+      var barsHTML = '<div class="elements-bars">';
+      analysis.forEach(function(a) {
+        barsHTML +=
+          '<div class="element-bar-row">' +
+          '<span class="element-bar-label" style="color:' + ELEM_COLORS[a.element] + '">' + a.element + '</span>' +
+          '<div class="element-bar-track"><div class="element-bar-fill ' + ELEM_KEYS[a.element] + '" style="width:' + a.percentage + '%"></div></div>' +
+          '<span class="element-bar-count">' + a.status + '</span></div>';
+      });
+      barsHTML += '</div>';
+
+      var strength = currentBazi.strength;
+      var verdictHTML =
+        '<div class="elements-verdict"><h3>日主' + strength.level + '</h3>' +
+        '<p>日主' + currentBazi.day.stem.char + '(' + currentBazi.day.stem.element + ')，综合评分' + (strength.score * 100).toFixed(0) + '分。' +
+        '喜用神：' + strength.favorable.join('、') + '。忌神：' + strength.unfavorable.join('、') + '。</p></div>';
+      content.innerHTML = barsHTML + verdictHTML;
+    }
+
+    function renderTenGods() {
+      var table = $('tenGodsTable');
+      var pillars = ['year', 'month', 'day', 'hour'];
+      var labels = ['年柱', '月柱', '日柱', '时柱'];
+      var html = '<table><thead><tr><th></th>';
+      labels.forEach(function(l) { html += '<th>' + l + '</th>'; });
+      html += '</tr></thead><tbody>';
+      html += '<tr><td>天干</td>';
+      pillars.forEach(function(p) {
+        html += '<td' + (currentBazi.tenGods[p].stemGod === '日主' ? ' class="day-master-cell"' : '') + '>' + currentBazi[p].stem.char + '</td>';
+      });
+      html += '</tr><tr><td>十神</td>';
+      pillars.forEach(function(p) {
+        html += '<td' + (currentBazi.tenGods[p].stemGod === '日主' ? ' class="day-master-cell"' : '') + '>' + currentBazi.tenGods[p].stemGod + '</td>';
+      });
+      html += '</tr><tr><td>地支</td>';
+      pillars.forEach(function(p) { html += '<td>' + currentBazi[p].branch.char + '</td>'; });
+      html += '</tr><tr><td>纳音</td>';
+      pillars.forEach(function(p) { html += '<td>' + currentBazi[p].nayin + '</td>'; });
+      html += '</tr></tbody></table>';
+      table.innerHTML = html;
+    }
+
+    function renderShenSha() {
+      var grid = $('shenshaGrid');
+      var shensha = currentBazi.shensha;
+      if (shensha.length === 0) {
+        grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;width:100%">命局平和，未出现明显神煞</p>';
+        return;
+      }
+      grid.innerHTML = '';
+      shensha.forEach(function(s) {
+        var tag = document.createElement('span');
+        tag.className = 'shensha-tag ' + s.type;
+        tag.textContent = s.name;
+        tag.title = s.desc;
+        grid.appendChild(tag);
+      });
+    }
+
+    function renderDaYun() {
+      var info = $('dayunInfo');
+      var timeline = $('dayunTimeline');
+      var dayun = currentBazi.dayun;
+      var age = currentBazi.age;
+      info.innerHTML = '起运年龄：<span>' + dayun.startAge + '岁</span> · 排法：<span>' + dayun.direction + '</span> · 当前年龄：<span>' + age + '岁</span>';
+      timeline.innerHTML = '';
+      var dmStem = currentBazi.day.stem;
+      dayun.pillars.forEach(function(dy) {
+        var tenGod = Gods.getTenGod(dmStem, dy.stem);
+        var isCurrent = (age >= dy.ageStart && age <= dy.ageEnd);
+        var card = document.createElement('div');
+        card.className = 'dayun-card';
+        if (isCurrent) card.classList.add('current');
+        card.innerHTML =
+          '<div class="dayun-age">' + dy.ageStart + '-' + dy.ageEnd + '岁</div>' +
+          '<div class="dayun-stem">' + dy.stem.char + '</div>' +
+          '<div class="dayun-branch">' + dy.branch.char + '</div>' +
+          '<div class="dayun-tengod">' + tenGod + '</div>' +
+          '<div class="dayun-nayin">' + dy.nayin + '</div>' +
+          (isCurrent ? '<div style="font-size:0.62rem;color:var(--accent);margin-top:2px">当前</div>' : '');
+        timeline.appendChild(card);
+      });
+    }
+
+    function renderLiuNian() {
+      var content = $('liunianContent');
+      var liuNian = currentBazi.liuNian;
+      var analysis = currentBazi.liuNianAnalysis;
+      var html =
+        '<div class="liunian-pillar">' +
+        '<div><div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">天干</div><div class="liunian-stem">' + liuNian.stem.char + '</div><div style="font-size:0.7rem;color:var(--text-dim)">' + liuNian.stem.element + '</div></div>' +
+        '<div style="font-size:1.2rem;color:var(--accent)">·</div>' +
+        '<div><div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">地支</div><div class="liunian-branch">' + liuNian.branch.char + '</div><div style="font-size:0.7rem;color:var(--text-dim)">' + liuNian.branch.animal + ' · ' + liuNian.branch.element + '</div></div>' +
+        '</div><div class="liunian-detail">';
+      analysis.forEach(function(a) {
+        var color = 'var(--text-dim)';
+        if (a.type === 'clash') color = 'var(--red)';
+        if (a.type === 'warning') color = 'var(--accent-light)';
+        if (a.type === 'good') color = 'var(--green)';
+        html += '<p style="color:' + color + ';margin-bottom:6px">' + a.text + '</p>';
+      });
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function renderPredictions(category) {
+      var content = $('predContent');
+      var text = currentPredictions[category] || '';
+      content.innerHTML = '<div class="pred-body">' + text + '</div>';
+    }
+  })();
+  </script>
+</body>
+</html>

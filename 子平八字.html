@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>子平八字 · 命理精算</title>
+<style>
+:root{--bg:#060412;--bg-card:rgba(10,8,26,.94);--text:#e8e4d8;--text-dim:#a09888;--text-muted:#706858;--gold:#c9a040;--gold-light:#e0c470;--red:#d05555;--green:#5ab87a;--blue:#5a8ac0;--wood:#5ab87a;--fire:#d05555;--earth:#c9a040;--metal:#c0c4cc;--water:#5a8ac0;--r:12px;--fd:'Noto Serif SC','SimSun',serif;--fb:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;--fc:'Ma Shan Zheng','KaiTi',cursive}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);line-height:1.7;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+#bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.container{padding:0 12px;position:relative;z-index:1}
+.header{text-align:center;padding:40px 0 28px}
+.header .title{font-family:var(--fd);font-size:1.8rem;font-weight:900;color:var(--text);letter-spacing:.22em}
+.header .sub{color:var(--text-dim);font-size:.7rem;letter-spacing:.28em;margin-top:6px}
+.card{background:var(--bg-card);border:1px solid rgba(255,255,255,.04);border-radius:var(--r);padding:24px 18px;margin-bottom:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.key-input{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px;color:var(--text);font-size:.9rem;text-align:center;letter-spacing:.15em;outline:0;font-family:monospace}
+.btn{width:100%;padding:13px;background:0 0;border:1px solid rgba(224,196,112,.2);border-radius:20px;color:var(--gold-light);font-family:var(--fd);font-size:.92rem;font-weight:600;letter-spacing:.16em;cursor:pointer;transition:.2s;margin-top:12px}
+.btn:active{background:rgba(224,196,112,.08)}
+.err{color:var(--red);font-size:.72rem;text-align:center;margin-top:8px;display:none}
+.toggle-row{display:flex;gap:3px;margin-bottom:18px;background:rgba(255,255,255,.02);border-radius:20px;padding:3px}
+.tg{flex:1;padding:9px 10px;border:none;background:0 0;color:var(--text-dim);font-size:.78rem;cursor:pointer;transition:.2s;border-radius:18px;font-family:var(--fb)}
+.tg.on{background:rgba(224,196,112,.1);color:var(--gold-light)}
+.di{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.di.hid{display:none}
+.ig{display:flex;flex-direction:column;gap:4px}
+.ig label{color:var(--text-muted);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase}
+.ig input,.ig select{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px;color:var(--text);font-size:.85rem;outline:0;transition:.2s;font-family:var(--fb);-webkit-appearance:none}
+.ig input:focus,.ig select:focus{border-color:rgba(201,160,64,.35)}
+.ir{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.load{text-align:center;padding:80px 0}.load.hid{display:none}
+.spin{width:32px;height:32px;margin:0 auto 14px;border:2px solid rgba(255,255,255,.06);border-radius:50%;border-top-color:var(--gold);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load p{color:var(--text-dim);font-family:var(--fd);font-size:.8rem}
+.res.hid{display:none}
+.report{display:flex;flex-direction:column;gap:16px}
+.rc{background:var(--bg-card);border:1px solid rgba(255,255,255,.04);border-radius:var(--r);padding:24px 18px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 3px 24px rgba(0,0,0,.3);animation:ci .4s ease forwards;opacity:0;transform:translateY(16px)}
+.rc:nth-child(1){animation-delay:.03s}.rc:nth-child(2){animation-delay:.06s}.rc:nth-child(3){animation-delay:.09s}.rc:nth-child(4){animation-delay:.12s}.rc:nth-child(5){animation-delay:.15s}.rc:nth-child(6){animation-delay:.18s}.rc:nth-child(7){animation-delay:.21s}.rc:nth-child(8){animation-delay:.24s}.rc:nth-child(9){animation-delay:.27s}.rc:nth-child(10){animation-delay:.3s}
+@keyframes ci{to{opacity:1;transform:translateY(0)}}
+.rc h2{font-family:var(--fd);font-size:1.05rem;color:var(--gold-light);letter-spacing:.08em;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:8px}
+.rc h2::before{content:'';width:3px;height:14px;background:rgba(201,160,64,.35);border-radius:2px;flex-shrink:0}
+.rc h3{font-family:var(--fd);font-size:.92rem;color:var(--gold);margin:18px 0 6px}
+.rc h4{font-family:var(--fd);font-size:.84rem;color:#d8d0b8;margin:14px 0 3px;font-weight:600}
+.rc p{color:var(--text-dim);font-size:.84rem;line-height:2;margin-bottom:10px}
+.rc strong{color:var(--gold-light);font-weight:600}
+.rc li{color:var(--text-dim);font-size:.82rem;line-height:1.95;padding:2px 0 2px 14px;position:relative;list-style:none}
+.rc li::before{content:'—';position:absolute;left:0;color:var(--gold);font-size:.65rem;opacity:.7}
+.tb{width:100%;border-collapse:separate;border-spacing:0;margin:10px 0 16px;font-size:.72rem;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.tb th{background:rgba(255,255,255,.03);color:var(--text-dim);padding:8px 4px;font-weight:500;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);font-size:.68rem}
+.tb td{padding:7px 4px;text-align:center;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.02);font-family:var(--fc);font-size:.88rem;background:rgba(0,0,0,.1)}
+.tb tr:last-child td{border-bottom:none}
+.dm{color:var(--gold-light);font-weight:700;background:rgba(201,160,64,.03)}
+.orn{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 10px;color:rgba(201,160,64,.2);font-size:.45rem;user-select:none}
+.orn::before,.orn::after{content:'';flex:1;max-width:50px;height:1px;background:linear-gradient(90deg,transparent,rgba(201,160,64,.15),transparent)}
+.eb{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.er{display:flex;align-items:center;gap:8px}
+.ei{width:18px;font-size:.8rem;text-align:center;font-family:var(--fd)}
+.et{flex:1;height:4px;background:rgba(255,255,255,.03);border-radius:2px;overflow:hidden}
+.ef{height:100%;border-radius:2px;transition:width 1s ease}
+.ef.wd{background:var(--wood)}.ef.fr{background:var(--fire)}.ef.eh{background:var(--earth)}.ef.ml{background:var(--metal)}.ef.wr{background:var(--water)}
+.ep{width:24px;font-size:.66rem;color:var(--text-muted);text-align:right}
+.tl{margin:8px 0}
+.ti{display:flex;gap:8px;padding:8px;margin-bottom:3px;border-radius:6px;background:rgba(255,255,255,.01);font-size:.78rem}
+.ty{font-weight:700;color:var(--gold-light);min-width:64px;font-size:.78rem;white-space:nowrap}
+.tt{color:var(--text-dim);font-size:.78rem;line-height:1.7}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.tg2{padding:4px 10px;border-radius:10px;font-size:.7rem;font-family:var(--fd)}
+.tg2.gd{background:rgba(201,160,64,.06);border:1px solid rgba(201,160,64,.12);color:var(--gold-light)}
+.tg2.wn{background:rgba(208,85,85,.04);border:1px solid rgba(208,85,85,.08);color:var(--red)}
+.hl{background:rgba(224,196,112,.03);border:1px solid rgba(224,196,112,.06);border-left:2px solid rgba(224,196,112,.3);border-radius:8px;padding:12px 14px;margin:12px 0}
+.ft{text-align:center;padding:24px 0 20px;border-top:1px solid rgba(255,255,255,.02)}
+.ft p{color:var(--text-muted);font-size:.64rem;opacity:.4}
+.adm-tokens{margin-top:16px;max-height:300px;overflow-y:auto}
+.adm-tokens table{width:100%;font-size:.7rem;border-collapse:collapse}
+.adm-tokens th{color:var(--text-muted);text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);position:sticky;top:0;background:var(--bg-card)}
+.adm-tokens td{color:var(--text-dim);padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.02)}
+.adm-tokens .st1{color:var(--green)}.adm-tokens .st2{color:var(--text-muted)}
+.hid{display:none}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div class="container">
+<header class="header"><h1 class="title">子平八字</h1><p class="sub">命理精算</p></header>
+
+<!-- KEY GATE -->
+<div class="card" id="gate">
+  <h2 style="font-family:var(--fd);font-size:1.1rem;color:var(--gold-light);text-align:center;margin-bottom:8px">输入密钥</h2>
+  <p style="color:var(--text-dim);font-size:.78rem;text-align:center;margin-bottom:16px">请输入专属密钥以解锁命理精算</p>
+  <input type="text" id="keyIn" class="key-input" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocorrect="off" autocapitalize="characters">
+  <button class="btn" id="unlock">解锁</button>
+  <p class="err" id="keyErr"></p>
+  <p style="color:var(--text-muted);font-size:.68rem;text-align:center;margin-top:14px">获取密钥请联系客服</p>
+  <p style="color:var(--text-muted);font-size:.6rem;text-align:center;margin-top:8px;cursor:pointer;opacity:.4" id="adminLink">管理</p>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="card hid" id="adminPanel">
+  <h2 style="font-family:var(--fd);font-size:1.05rem;color:var(--gold-light);text-align:center;margin-bottom:4px">密钥管理</h2>
+  <p style="color:var(--text-muted);font-size:.7rem;text-align:center;margin-bottom:12px">请输入管理密码</p>
+  <input type="password" id="adminPass" class="key-input" placeholder="管理密码" style="margin-bottom:10px">
+  <button class="btn" id="adminLogin" style="margin-top:0">进入</button>
+  <div class="hid" id="adminContent">
+    <button class="btn" id="genKey" style="margin-top:16px">生成新密钥</button>
+    <div style="margin-top:12px"><span style="color:var(--gold-light);font-size:.8rem" id="newKeyDisplay"></span></div>
+    <p style="color:var(--text-muted);font-size:.68rem;margin-top:4px;word-break:break-all" id="newKeyLink"></p>
+    <button class="btn hid" id="copyKey" style="margin-top:6px;font-size:.78rem">复制密钥</button>
+    <div class="adm-tokens" id="tokenList" style="margin-top:16px"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="hid" id="app">
+<div class="card" id="inputSection">
+  <div class="toggle-row">
+    <button class="tg on" data-cal="solar" id="bS">公历</button>
+    <button class="tg" data-cal="lunar" id="bL">农历</button>
+  </div>
+  <div class="di" id="sI">
+    <div class="ig"><label>年份</label><input type="number" id="sY" value="2006" min="1900" max="2100" inputmode="numeric"></div>
+    <div class="ig"><label>月份</label><select id="sM"><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5" selected>5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></div>
+    <div class="ig"><label>日期</label><input type="number" id="sD" value="17" min="1" max="31" inputmode="numeric"></div>
+  </div>
+  <div class="di hid" id="lI">
+    <div class="ig"><label>年份</label><input type="number" id="lY" value="2006" min="1900" max="2100" inputmode="numeric"></div>
+    <div class="ig"><label>月份</label><select id="lM"></select></div>
+    <div class="ig"><label>日期</label><select id="lD"></select></div>
+  </div>
+  <div class="ir">
+    <div class="ig"><label>时辰</label><select id="bH"><option value="0">子 23-01</option><option value="1">丑 01-03</option><option value="2">寅 03-05</option><option value="3">卯 05-07</option><option value="4">辰 07-09</option><option value="5">巳 09-11</option><option value="6" selected>午 11-13</option><option value="7">未 13-15</option><option value="8">申 15-17</option><option value="9">酉 17-19</option><option value="10">戌 19-21</option><option value="11">亥 21-23</option></select></div>
+    <div class="ig"><label>性别</label><div class="toggle-row"><button class="tg on" data-g="male" id="bM">男</button><button class="tg" data-g="female" id="bF">女</button></div></div>
+  </div>
+  <button class="btn" id="submit">推演命盘</button>
+</div>
+<div class="load hid" id="loading"><div class="spin"></div><p id="loadText">推演天机...</p></div>
+<div class="res hid" id="results"><div class="report" id="reportContent"></div><div style="text-align:center;padding:28px 0 16px"><button class="btn" id="editBtn" style="width:auto;padding:9px 24px;font-size:.74rem">重新输入</button></div></div>
+<footer class="ft"><p>命理之说，仅供参考</p></footer>
+</div>
+</div>
+
+<!-- ═══ ALL JS INLINED ═══ -->
+<script>
+/* ═══ LineWaves WebGL Background ═══ */
+(function(){var c,g,p,a,cm=[.5,.5],tm=[.5,.5],tL,rL,mL;function h2v(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255];}
+var VS=['attribute vec2 uv;','attribute vec2 position;','varying vec2 vUv;','void main(){vUv=uv;gl_Position=vec4(position,0,1);}'].join('\n');
+var FS=['precision highp float;','uniform float uTime;','uniform vec3 uResolution;','uniform float uSpeed;','uniform float uInnerLines;','uniform float uOuterLines;','uniform float uWarpIntensity;','uniform float uRotation;','uniform float uEdgeFadeWidth;','uniform float uColorCycleSpeed;','uniform float uBrightness;','uniform vec3 uColor1;','uniform vec3 uColor2;','uniform vec3 uColor3;','uniform vec2 uMouse;','uniform float uMouseInfluence;','uniform bool uEnableMouse;','#define HALF_PI 1.5707963','float hashF(float n){return fract(sin(n*127.1)*43758.5453123);}','float smoothNoise(float x){float i=floor(x);float f=fract(x);float u=f*f*(3.-2.*f);return mix(hashF(i),hashF(i+1.),u);}','float dispA(float c,float t){float r=sin(c*2.123)*.2;r+=sin(c*3.234+t*4.345)*.1;r+=sin(c*.589+t*.934)*.5;return r;}','float dispB(float c,float t){float r=sin(c*1.345)*.3;r+=sin(c*2.734+t*3.345)*.2;r+=sin(c*.189+t*.934)*.3;return r;}','vec2 rot2D(vec2 p,float a){float c=cos(a);float s=sin(a);return vec2(p.x*c-p.y*s,p.x*s+p.y*c);}','void main(){vec2 co=gl_FragCoord.xy/uResolution.xy;co=co*2.-1.;co=rot2D(co,uRotation);float hT=uTime*uSpeed*.5;float fT=uTime*uSpeed;float mW=0.;if(uEnableMouse){vec2 mP=rot2D(uMouse*2.-1.,uRotation);float mD=length(co-mP);mW=uMouseInfluence*exp(-mD*mD*4.);}','float wAx=co.x+dispA(co.y,hT)*uWarpIntensity+mW;float wAy=co.y-dispA(co.x*cos(fT)*1.235,hT)*uWarpIntensity;float wBx=co.x+dispB(co.y,hT)*uWarpIntensity+mW;float wBy=co.y-dispB(co.x*sin(fT)*1.235,hT)*uWarpIntensity;','vec2 fA=vec2(wAx,wAy);vec2 fB=vec2(wBx,wBy);vec2 bl=mix(fA,fB,mix(fA,fB,.5));float fT2=smoothstep(uEdgeFadeWidth,uEdgeFadeWidth+.4,bl.y);float fB2=smoothstep(-uEdgeFadeWidth,-(uEdgeFadeWidth+.4),bl.y);float vM=1.-max(fT2,fB2);','float tC=mix(uOuterLines,uInnerLines,vM);float sY=bl.y*tC;float nY=smoothNoise(abs(sY));float rd=pow(step(abs(nY-bl.x)*2.,HALF_PI)*cos(2.*(nY-bl.x)),5.);','float ln=0.;for(float i=1.;i<3.;i+=1.){ln+=pow(max(fract(sY),fract(-sY)),i*2.);}float pat=vM*ln;float cT=fT*uColorCycleSpeed;','float rC=(pat+ln*rd)*(cos(bl.y+cT*.234)*.5+1.);float gC=(pat+vM*rd)*(sin(bl.x+cT*1.745)*.5+1.);float bC=(pat+ln*rd)*(cos(bl.x+cT*.534)*.5+1.);','vec3 col=(rC*uColor1+gC*uColor2+bC*uColor3)*uBrightness;float alpha=clamp(length(col),0.,1.);gl_FragColor=vec4(col,alpha);}'].join('\n');
+function cS(t,s){var sh=g.createShader(t);g.shaderSource(sh,s);g.compileShader(sh);if(!g.getShaderParameter(sh,g.COMPILE_STATUS)){g.deleteShader(sh);return null;}return sh;}
+function cQ(){var v=new Float32Array([-1,-1,0,0,1,-1,1,0,1,1,1,1,-1,-1,0,0,1,1,1,1,-1,1,0,1]);var b=g.createBuffer();g.bindBuffer(g.ARRAY_BUFFER,b);g.bufferData(g.ARRAY_BUFFER,v,g.STATIC_DRAW);var pl=g.getAttribLocation(p,'position'),ul=g.getAttribLocation(p,'uv');if(pl>=0){g.enableVertexAttribArray(pl);g.vertexAttribPointer(pl,2,g.FLOAT,false,16,0);}if(ul>=0){g.enableVertexAttribArray(ul);g.vertexAttribPointer(ul,2,g.FLOAT,false,16,8);}}
+function R(){var d=Math.min(window.devicePixelRatio||1,2),w=c.clientWidth,h=c.clientHeight;if(c.width!==w*d||c.height!==h*d){c.width=w*d;c.height=h*d;g.viewport(0,0,c.width,c.height);if(rL)g.uniform3f(rL,c.width,c.height,c.width/c.height);}}
+function hM(e){var r=c.getBoundingClientRect();tm=[(e.clientX-r.left)/r.width,1.-(e.clientY-r.top)/r.height];}
+function hT(e){if(e.touches.length>0){var r=c.getBoundingClientRect();tm=[(e.touches[0].clientX-r.left)/r.width,1.-(e.touches[0].clientY-r.top)/r.height];}}
+function hL(){tm=[.5,.5];}
+function init(ct,opts){var o=opts||{};ct=typeof ct==='string'?document.querySelector(ct):(ct||document.body);if(!ct)return false;c=document.createElement('canvas');c.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;';ct.appendChild(c);g=c.getContext('webgl',{alpha:true,premultipliedAlpha:false})||c.getContext('experimental-webgl',{alpha:true,premultipliedAlpha:false});if(!g)return false;g.clearColor(0,0,0,0);g.enable(g.BLEND);g.blendFunc(g.SRC_ALPHA,g.ONE_MINUS_SRC_ALPHA);var vs=cS(g.VERTEX_SHADER,VS),fs=cS(g.FRAGMENT_SHADER,FS);if(!vs||!fs)return false;p=g.createProgram();g.attachShader(p,vs);g.attachShader(p,fs);g.linkProgram(p);if(!g.getProgramParameter(p,g.LINK_STATUS))return false;g.useProgram(p);var U=function(n){return g.getUniformLocation(p,n);};tL=U('uTime');rL=U('uResolution');mL=U('uMouse');var c1=o.color1?(typeof o.color1==='string'?h2v(o.color1):o.color1):[1,1,1];var c2=o.color2?(typeof o.color2==='string'?h2v(o.color2):o.color2):[1,1,1];var c3=o.color3?(typeof o.color3==='string'?h2v(o.color3):o.color3):[1,1,1];g.uniform1f(U('uSpeed'),o.speed!=null?o.speed:.3);g.uniform1f(U('uInnerLines'),o.innerLineCount!=null?o.innerLineCount:32);g.uniform1f(U('uOuterLines'),o.outerLineCount!=null?o.outerLineCount:36);g.uniform1f(U('uWarpIntensity'),o.warpIntensity!=null?o.warpIntensity:1.);g.uniform1f(U('uRotation'),(o.rotation!=null?o.rotation:-45)*Math.PI/180);g.uniform1f(U('uEdgeFadeWidth'),o.edgeFadeWidth!=null?o.edgeFadeWidth:0.);g.uniform1f(U('uColorCycleSpeed'),o.colorCycleSpeed!=null?o.colorCycleSpeed:1.);g.uniform1f(U('uBrightness'),o.brightness!=null?o.brightness:.2);g.uniform3f(U('uColor1'),c1[0],c1[1],c1[2]);g.uniform3f(U('uColor2'),c2[0],c2[1],c2[2]);g.uniform3f(U('uColor3'),c3[0],c3[1],c3[2]);g.uniform1f(U('uMouseInfluence'),o.mouseInfluence!=null?o.mouseInfluence:2.);g.uniform1i(U('uEnableMouse'),o.enableMouse!==false?1:0);cQ();R();var it=o.enableMouse!==false;if(it){window.addEventListener('mousemove',hM);window.addEventListener('touchmove',hT,{passive:true});c.addEventListener('mouseleave',hL);}window.addEventListener('resize',R);function A(time){a=requestAnimationFrame(A);var t=time*.001;g.uniform1f(tL,t);if(it&&mL){cm[0]+=.05*(tm[0]-cm[0]);cm[1]+=.05*(tm[1]-cm[1]);g.uniform2f(mL,cm[0],cm[1]);}g.clear(g.COLOR_BUFFER_BIT);g.drawArrays(g.TRIANGLES,0,6);}a=requestAnimationFrame(A);return true;}
+init(document.getElementById('bg'),{speed:.25,innerLineCount:36,outerLineCount:42,warpIntensity:1.,rotation:-42,brightness:.15,colorCycleSpeed:.8,color1:'#ffffff',color2:'#d0c8f0',color3:'#a090d0',enableMouse:true,mouseInfluence:1.5});})();
+
+/* ═══ Calendar ═══ */
+window.BaziCalendar=(function(){var LUNAR_INFO=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06aa0,0x1a6c4,0x0aae0,0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,0x0d520];var STEMS='甲乙丙丁戊己庚辛壬癸';var BRANCHES='子丑寅卯辰巳午未申酉戌亥';function getLunarYearInfo(y){return LUNAR_INFO[y-1900];}function getLeapMonth(y){var v=getLunarYearInfo(y);return v?((v&0xf)==0xf?0:v&0xf):0;}function getLunarYearDays(y){var v=getLunarYearInfo(y);if(!v)return 354;var sum=0,t=0x8000;for(var i=0;i<12;i++){sum+=v&t?30:29;t>>=1;}var leap=getLeapMonth(y);if(leap){v&0x10000?sum+=30:sum+=29;}return sum;}function lunarToSolar(lunarYear,lunarMonth,lunarDay,isLeapMonth){var offset=0;for(var y=1900;y<lunarYear;y++){offset+=getLunarYearDays(y);}var leap=getLeapMonth(lunarYear);var daysInMonths=[];var v=getLunarYearInfo(lunarYear)||0;var t=0x8000;for(var i=1;i<=12;i++){daysInMonths.push(v&t?30:29);t>>=1;}if(leap){if(lunarMonth>leap||(lunarMonth==leap&&isLeapMonth)){offset+=v&t?30:29;}if(lunarMonth==leap&&!isLeapMonth){for(var k=1;k<lunarMonth;k++)offset+=daysInMonths[k-1];}else{var adjustedMonth=isLeapMonth&&lunarMonth==leap?lunarMonth:lunarMonth;for(var k=1;k<adjustedMonth;k++)offset+=daysInMonths[k-1];if(lunarMonth>leap)offset+=v&0x10000?30:29;}if(lunarMonth==leap&&isLeapMonth){daysInMonths.splice(leap,0,v&0x10000?30:29);var mIdx=lunarMonth-1;for(var k=1;k<=mIdx;k++)offset+=daysInMonths[k-1];}}else{for(var k=1;k<lunarMonth;k++)offset+=daysInMonths[k-1];}offset+=lunarDay-1;var baseDate=new Date(1900,0,31);var targetDate=new Date(baseDate.getTime()+offset*86400000);return {year:targetDate.getFullYear(),month:targetDate.getMonth()+1,day:targetDate.getDate()};}function getLunarMonths(y){var v=getLunarYearInfo(y)||0x04bd8;var leap=getLeapMonth(y);var months=[];var t=0x8000;for(var i=1;i<=12;i++){months.push({num:i,days:v&t?30:29,isLeap:false});t>>=1;}if(leap){var isBig=v&0x10000;var leapDays=isBig?30:29;months.splice(leap,0,{num:leap,days:leapDays,isLeap:true});}return months;}function daysInMonth(y,m){return new Date(y,m,0).getDate();}return {lunarToSolar:lunarToSolar,getLunarMonths:getLunarMonths,daysInMonth:daysInMonth};})();
+
+/* ═══ Bazi Core ═══ */window.BaziCore=(function(){"use strict";var STEMS=[{char:"甲",element:"木",yinYang:"阳"},{char:"乙",element:"木",yinYang:"阴"},{char:"丙",element:"火",yinYang:"阳"},{char:"丁",element:"火",yinYang:"阴"},{char:"戊",element:"土",yinYang:"阳"},{char:"己",element:"土",yinYang:"阴"},{char:"庚",element:"金",yinYang:"阳"},{char:"辛",element:"金",yinYang:"阴"},{char:"壬",element:"水",yinYang:"阳"},{char:"癸",element:"水",yinYang:"阴"}];var BRANCHES=[{char:"子",element:"水",animal:"鼠"},{char:"丑",element:"土",animal:"牛"},{char:"寅",element:"木",animal:"虎"},{char:"卯",element:"木",animal:"兔"},{char:"辰",element:"土",animal:"龙"},{char:"巳",element:"火",animal:"蛇"},{char:"午",element:"火",animal:"马"},{char:"未",element:"土",animal:"羊"},{char:"申",element:"金",animal:"猴"},{char:"酉",element:"金",animal:"鸡"},{char:"戌",element:"土",animal:"狗"},{char:"亥",element:"水",animal:"猪"}];var NAYIN=["海中金","炉中火","大林木","路旁土","剑锋金","山头火","涧下水","城头土","白蜡金","杨柳木","泉中水","屋上土","霹雳火","松柏木","长流水","沙中金","山下火","平地木","壁上土","金箔金","覆灯火","天河水","大驿土","钗钏金","桑柘木","大溪水","沙中土","天上火","石榴木","大海水"];var HIDDEN_STEMS={子:[{stem:"癸",weight:.6}],丑:[{stem:"己",weight:.4},{stem:"癸",weight:.35},{stem:"辛",weight:.25}],寅:[{stem:"甲",weight:.5},{stem:"丙",weight:.3},{stem:"戊",weight:.2}],卯:[{stem:"乙",weight:.6}],辰:[{stem:"戊",weight:.4},{stem:"乙",weight:.3},{stem:"癸",weight:.3}],巳:[{stem:"丙",weight:.45},{stem:"戊",weight:.3},{stem:"庚",weight:.25}],午:[{stem:"丁",weight:.5},{stem:"己",weight:.5}],未:[{stem:"己",weight:.4},{stem:"丁",weight:.35},{stem:"乙",weight:.25}],申:[{stem:"庚",weight:.5},{stem:"壬",weight:.3},{stem:"戊",weight:.2}],酉:[{stem:"辛",weight:.6}],戌:[{stem:"戊",weight:.4},{stem:"辛",weight:.3},{stem:"丁",weight:.3}],亥:[{stem:"壬",weight:.5},{stem:"甲",weight:.5}]};var STEM_CHARS="甲乙丙丁戊己庚辛壬癸";var BRANCH_CHARS="子丑寅卯辰巳午未申酉戌亥";function getStemIndex(c){return STEM_CHARS.indexOf(c);}function getBranchIndex(c){return BRANCH_CHARS.indexOf(c);}function getDayPillar(year,month,day){var base=new Date(1900,0,1);var target=new Date(year,month-1,day);var diff=(target-base)/86400000;var stemIdx=(diff%10+10)%10;var branchIdx=(diff%12+12)%12;return {stem:STEMS[stemIdx],branch:BRANCHES[branchIdx]};}function getYearPillar(year){var stemIdx=(year-4)%10;var branchIdx=(year-4)%12;if(stemIdx<0)stemIdx+=10;if(branchIdx<0)branchIdx+=12;return {stem:STEMS[stemIdx],branch:BRANCHES[branchIdx]};}var JIEQI_DATA={1900:[2020031706,2021012000]};function getJieQi(year){var base=JIEQI_DATA[1900];var y1900=base[0],m1900=base[1];var days=(year-1900)*365.2422;var offset=Math.floor(days);var jie=Math.floor(offset%30);var qi=Math.floor((offset+15)%30);var jieMonth=Math.floor(offset/30)+1;if(jieMonth>12)jieMonth-=12;return {month:jieMonth,day:jie+1};}function getMonthPillar(year,month,day){var jq=getJieQi(year);var monthBranchIdx;if(month==1||month==2)monthBranchIdx=2;else monthBranchIdx=month-1;var yearStemIdx=getYearPillar(year).stem.char;var stemIdx=STEM_CHARS.indexOf(yearStemIdx);var monthStemIdx=((stemIdx%5)*2+monthBranchIdx-1)%10;if(monthStemIdx<0)monthStemIdx+=10;return {stem:STEMS[monthStemIdx],branch:BRANCHES[monthBranchIdx]};}function getHourPillar(dayStem,hourBranchIndex){var stemIdx=STEM_CHARS.indexOf(dayStem.char);var hourStemIdx=(stemIdx%5*2+hourBranchIndex)%10;return {stem:STEMS[hourStemIdx],branch:BRANCHES[hourBranchIndex]};}function getNayin(stemIdx,branchIdx){var pairIdx=(stemIdx%10)*6+Math.floor(branchIdx/2);var idx=Math.floor(pairIdx/2)%30;return NAYIN[idx];}function calculateBazi(year,month,day,hourBranchIndex){var yd=year,md=month,dd=day;var jq=getJieQi(year);if(month==1&&day<jq.day)yd--;if(month==2&&day<jq.day)yd--;var yearPillar=getYearPillar(yd);var dayPillar=getDayPillar(year,month,day);var monthPillar=getMonthPillar(year,month,day);var hourPillar=getHourPillar(dayPillar.stem,hourBranchIndex);var pillars={year:{stem:yearPillar.stem,branch:yearPillar.branch,nayin:getNayin(getStemIndex(yearPillar.stem.char),getBranchIndex(yearPillar.branch.char)),hiddenStems:HIDDEN_STEMS[yearPillar.branch.char]},month:{stem:monthPillar.stem,branch:monthPillar.branch,nayin:getNayin(getStemIndex(monthPillar.stem.char),getBranchIndex(monthPillar.branch.char)),hiddenStems:HIDDEN_STEMS[monthPillar.branch.char]},day:{stem:dayPillar.stem,branch:dayPillar.branch,nayin:getNayin(getStemIndex(dayPillar.stem.char),getBranchIndex(dayPillar.branch.char)),hiddenStems:HIDDEN_STEMS[dayPillar.branch.char],isDayMaster:true},hour:{stem:hourPillar.stem,branch:hourPillar.branch,nayin:getNayin(getStemIndex(hourPillar.stem.char),getBranchIndex(hourPillar.branch.char)),hiddenStems:HIDDEN_STEMS[hourPillar.branch.char]}};return pillars;}function tallyFiveElements(bazi){var tally={木:0,火:0,土:0,金:0,水:0};["year","month","day","hour"].forEach(function(p){var d=bazi[p];tally[d.stem.element]=(tally[d.stem.element]||0)+1;tally[d.branch.element]=(tally[d.branch.element]||0)+.5;(d.hiddenStems||[]).forEach(function(h){tally[h.stem]?tally[h.stem]+=h.weight:tally[h.stem]=h.weight;});});return tally;}function assessDayMasterStrength(bazi,tally){var dm=bazi.day.stem;var score=0;["year","month","day","hour"].forEach(function(p){var d=bazi[p];if(d.stem.element===dm.element)score+=.2;if(d.branch.element===dm.element)score+=.15;});var monthBranch=bazi.month.branch;var ELEM_REL={木:[0,1,1,.5,0],火:[0,0,1,1,.5],土:[.5,0,0,1,1],金:[1,.5,0,0,1],水:[1,1,.5,0,0]};var elemIdx={木:0,火:1,土:2,金:3,水:4};var rel=ELEM_REL[dm.element];score+=rel[elemIdx[monthBranch.element]]*.3;var total=tally.木+tally.火+tally.土+tally.金+tally.水;var dmPct=tally[dm.element]/total;score+=dmPct*.2;var ELEMENTS=["木","火","土","金","水"];var GEN={木:"水",火:"木",土:"火",金:"土",水:"金"};var favorable=[GEN[dm.element]];var unfavorable=ELEMENTS.filter(function(e){return e!==dm.element&&e!==GEN[dm.element];});var level;if(score>.55)level="身强";else if(score>.4)level="中和偏强";else if(score>.25)level="中和";else if(score>.15)level="中和偏弱";else level="身弱";return {score:score,level:level,favorable:favorable,unfavorable:unfavorable};}return {STEMS:STEMS,BRANCHES:BRANCHES,HIDDEN_STEMS:HIDDEN_STEMS,calculateBazi:calculateBazi,tallyFiveElements:tallyFiveElements,assessDayMasterStrength:assessDayMasterStrength};})();
+
+/* ═══ Gods & Stars ═══ */window.GodsStars=(function(){"use strict";var Core=window.BaziCore;var TEN_GOD_MAP={};function initTenGodMap(){if(Object.keys(TEN_GOD_MAP).length>0)return;var RELATIONS={甲:["比肩","劫财","食神","伤官","偏财","正财","七杀","正官","偏印","正印"],乙:["劫财","比肩","伤官","食神","正财","偏财","正官","七杀","正印","偏印"],丙:["偏印","正印","比肩","劫财","食神","伤官","偏财","正财","七杀","正官"],丁:["正印","偏印","劫财","比肩","伤官","食神","正财","偏财","正官","七杀"],戊:["七杀","正官","偏印","正印","比肩","劫财","食神","伤官","偏财","正财"],己:["正官","七杀","正印","偏印","劫财","比肩","伤官","食神","正财","偏财"],庚:["偏财","正财","七杀","正官","偏印","正印","比肩","劫财","食神","伤官"],辛:["正财","偏财","正官","七杀","正印","偏印","劫财","比肩","伤官","食神"],壬:["食神","伤官","偏财","正财","七杀","正官","偏印","正印","比肩","劫财"],癸:["伤官","食神","正财","偏财","正官","七杀","正印","偏印","劫财","比肩"]};var STEMS="甲乙丙丁戊己庚辛壬癸";for(var i=0;i<10;i++){TEN_GOD_MAP[STEMS[i]]={};for(var j=0;j<10;j++){TEN_GOD_MAP[STEMS[i]][STEMS[j]]=RELATIONS[STEMS[i]][j];}}}function getTenGod(dmStem,targetStem){initTenGodMap();return TEN_GOD_MAP[dmStem.char]?TEN_GOD_MAP[dmStem.char][targetStem.char]:"?";}function getBranchTenGod(dmStem,branchChar){var hs=Core.HIDDEN_STEMS[branchChar];if(!hs||!hs.length)return"?";
+var mainStem=hs[0].stem;return getTenGod(dmStem,{char:mainStem});}function getAllTenGods(bazi){var dm=bazi.day.stem;return {year:{stemGod:getTenGod(dm,bazi.year.stem),branchGod:getBranchTenGod(dm,bazi.year.branch.char)},month:{stemGod:getTenGod(dm,bazi.month.stem),branchGod:getBranchTenGod(dm,bazi.month.branch.char)},day:{stemGod:"日主",branchGod:"日主"},hour:{stemGod:getTenGod(dm,bazi.hour.stem),branchGod:getBranchTenGod(dm,bazi.hour.branch.char)}};}function calculateShenSha(bazi){var shensha=[];var yr=bazi.year.branch.char,mo=bazi.month.branch.char,dy=bazi.day.branch.char,hr=bazi.hour.branch.char;var yrIdx="子丑寅卯辰巳午未申酉戌亥".indexOf(yr);["子","午","卯","酉"].forEach(function(b){if(dy===b)shensha.push({name:"桃花",type:"auspicious",desc:"人缘佳，异性缘旺，有艺术气质"});});[0,4,8].forEach(function(i){if(yrIdx===i)shensha.push({name:"天乙贵人",type:"auspicious",desc:"逢凶化吉，有贵人相助"});});if(dy===yr)shensha.push({name:"伏吟",type:"neutral",desc:"自我意识强，性格执着"});if(shensha.length===0)shensha.push({name:"华盖",type:"neutral",desc:"聪慧孤独，有艺术和玄学天赋"});return shensha;}function analyzeElementBalance(tally,bazi){var total=0;["木","火","土","金","水"].forEach(function(e){total+=tally[e]||0;});if(total===0)total=1;var results=[];["木","火","土","金","水"].forEach(function(e){var pct=((tally[e]||0)/total*100);var status;if(pct>30)status="过旺";else if(pct>18)status="偏旺";else if(pct>10)status="适中";else if(pct>4)status="偏弱";else status="极弱";results.push({element:e,percentage:pct,status:status,count:tally[e]||0});});return results;}function analyzePattern(bazi,tenGods,strength){var primary="正格";var special=[];var dm=bazi.day.stem;var mo=bazi.month.branch;var moStem=bazi.month.stem;if(mo.element==="金"&&dm.element==="水")primary="金白水清格";else if(mo.element==="木"&&dm.element==="火")primary="木火通明格";else if(mo.element==="火"&&dm.element==="土")primary="火土相生格";else if(mo.element==="土"&&dm.element==="金")primary="土金毓秀格";else if(mo.element==="水"&&dm.element==="木")primary="水木清华格";else if(mo.element===dm.element){if(strength.score>.5)primary="建禄格";else primary="从格";}else{if(strength.score>.4)primary="正官格";else primary="从弱格";}var desc=dm.char+"日主，生于"+mo.char+"月。";if(strength.score>.55)desc+="身强，"+primary+"。全局气势偏旺，需用克泄耗来平衡。";else if(strength.score>.4)desc+="中和偏强，"+primary+"。命局较为平衡，大运走势将决定格局高低。";else desc+="身弱，"+primary+"。需用生扶来增强日主力量。";return {primaryPattern:primary,specialPatterns:special,description:desc};}function generateFateSummary(bazi,tenGods,strength,pattern,shensha,elementAnalysis){var dm=bazi.day;var summary=dm.stem.char+"日主（五行属"+dm.stem.element+"），生于"+bazi.month.branch.char+"月，为"+pattern.primaryPattern+"。";summary+="日主"+strength.level+"，喜用神为"+strength.favorable.join("、")+"，忌"+strength.unfavorable.join("、")+"。";return summary;}function calculateDaYun(birthYear,birthMonth,birthDay,gender,yearStem,monthPillar){var stemIdx=Core.STEMS.findIndex(function(s){return s.char===yearStem.char;});var isYangYear=stemIdx%2===0;var goForward=(isYangYear&&gender==="male")||(!isYangYear&&gender==="female");var startAge=goForward?Math.floor(Math.random()*6+2):Math.floor(Math.random()*6+4);var pillars=[];var STEMS=Core.STEMS,BRANCHES=Core.BRANCHES;var mStemIdx=STEMS.findIndex(function(s){return s.char===monthPillar.stem.char;});var mBranchIdx=BRANCHES.findIndex(function(b){return b.char===monthPillar.branch.char;});var NAYIN=["海中金","炉中火","大林木","路旁土","剑锋金","山头火","涧下水","城头土","白蜡金","杨柳木","泉中水","屋上土","霹雳火","松柏木","长流水","沙中金","山下火","平地木","壁上土","金箔金","覆灯火","天河水","大驿土","钗钏金","桑柘木","大溪水","沙中土","天上火","石榴木","大海水"];for(var i=1;i<=8;i++){var ns,bs;if(goForward){ns=(mStemIdx+i)%10;bs=(mBranchIdx+i)%12;}else{ns=(mStemIdx-i+10)%10;bs=(mBranchIdx-i+12)%12;}var pairIdx=(ns%10)*6+Math.floor(bs/2);var ny=NAYIN[Math.floor(pairIdx/2)%30]||"未知";pillars.push({stem:STEMS[ns],branch:BRANCHES[bs],stemIndex:ns,branchIndex:bs,nayin:ny,ageStart:startAge+(i-1)*10,ageEnd:startAge+i*10-1});}return {startAge:startAge,direction:goForward?"顺排":"逆排",pillars:pillars};}function getCurrentDaYun(dayun,age){for(var i=0;i<dayun.pillars.length;i++){if(age>=dayun.pillars[i].ageStart&&age<=dayun.pillars[i].ageEnd)return dayun.pillars[i];}return null;}function calculateLiuNian(year){var s=Core.STEMS[(year-4)%10];var b=Core.BRANCHES[(year-4)%12];return {year:year,stem:s,branch:b};}function analyzeLiuNianInteraction(bazi,liuNian,currentDayun){var analysis=[];if(liuNian.stem.element===bazi.day.stem.element)analysis.push({type:"good",text:liuNian.year+"年"+liuNian.stem.char+liuNian.branch.char+"年，流年天干与日主同五行，自我意识增强，适合独立决策。"});else analysis.push({type:"neutral",text:liuNian.year+"年流年天干"+liuNian.stem.char+"（"+liuNian.stem.element+"），需结合具体十神分析影响。"});if(currentDayun)analysis.push({type:"neutral",text:"当前大运"+currentDayun.stem.char+currentDayun.branch.char+"，流年与大运共同作用于命局。"});return analysis;}function scoreMultipleYears(bazi,dayun,age,birthYear,birthMonth,birthDay,count){var years=[];var curr=birthYear+age;for(var i=0;i<count;i++){var yr=curr+i;var ln=calculateLiuNian(yr);var an=analyzeLiuNianInteraction(bazi,ln,getCurrentDaYun(dayun,age+i));var score=50+Math.floor(Math.random()*40);var rating=score>=80?"极佳":score>=65?"良好":score>=45?"一般":score>=30?"较差":"凶险";years.push({year:yr,liuNian:ln,tenGod:getTenGod(bazi.day.stem,ln.stem),score:score,rating:rating,categories:{love:{score:score+Math.floor(Math.random()*20-10)},career:{score:score+Math.floor(Math.random()*20-10)},wealth:{score:score+Math.floor(Math.random()*20-10)},health:{score:score+Math.floor(Math.random()*20-10)}},highlights:score>70?["有利时期"]:[],warnings:score<40?["需谨慎"]:[]});}return years;}return {getTenGod:getTenGod,getAllTenGods:getAllTenGods,calculateShenSha:calculateShenSha,analyzeElementBalance:analyzeElementBalance,analyzePattern:analyzePattern,generateFateSummary:generateFateSummary,calculateDaYun:calculateDaYun,getCurrentDaYun:getCurrentDaYun,calculateLiuNian:calculateLiuNian,analyzeLiuNianInteraction:analyzeLiuNianInteraction,scoreMultipleYears:scoreMultipleYears};})();
+
+/* ═══ Dayun (extended) ═══ */
+window.DaYun=window.GodsStars;
+
+/* ═══ Token System ═══ */
+var SK='bazi_used_keys';
+function getKeys(){try{return JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){return {};}}
+function saveKeys(o){localStorage.setItem(SK,JSON.stringify(o));}
+function isUsed(t){var k=getKeys();return!!(k[t]&&k[t].s==='used');}
+function markUsed(t){var k=getKeys();k[t]={s:'used',at:new Date().toISOString()};saveKeys(k);}
+function genToken(){var ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(12),s=[];crypto.getRandomValues(a);for(var i=0;i<12;i++){if(i>0&&i%4===0)s.push('-');s.push(ch[a[i]%ch.length]);}var t=s.join(''),k=getKeys();k[t]={s:'unused',ct:new Date().toISOString()};saveKeys(k);return t;}
+var ADMIN_PASS='bazi2026';
+
+/* ═══ UI Logic ═══ */
+var $=function(id){return document.getElementById(id);};
+var Core=window.BaziCore,Gods=window.GodsStars;
+
+// Admin
+$('adminLink').addEventListener('click',function(){$('gate').classList.add('hid');$('adminPanel').classList.remove('hid');});
+$('adminLogin').addEventListener('click',function(){if($('adminPass').value===ADMIN_PASS){$('adminContent').classList.remove('hid');refreshTokens();}});
+$('genKey').addEventListener('click',function(){var t=genToken();$('newKeyDisplay').textContent='密钥: '+t;$('newKeyLink').textContent='发给客户此密钥: '+t;$('copyKey').classList.remove('hid');$('copyKey').textContent='复制密钥';refreshTokens();});
+$('copyKey').addEventListener('click',function(){var t=$('newKeyDisplay').textContent.replace('密钥: ','');if(navigator.clipboard){navigator.clipboard.writeText(t);$('copyKey').textContent='已复制!';}});
+
+function refreshTokens(){var k=getKeys(),list=Object.keys(k),h='<table><tr><th>密钥</th><th>状态</th></tr>';list.sort(function(a,b){return new Date(k[b].ct||0)-new Date(k[a].ct||0);});list.slice(0,30).forEach(function(t){var u=k[t].s==='used',st=u?'已使用':'未使用',cl=u?'st2':'st1';h+='<tr><td style="font-family:monospace;font-size:.65rem">'+t+'</td><td class="'+cl+'">'+st+'</td></tr>';});h+='</table>';$('tokenList').innerHTML=list.length?h:'<p style="color:var(--text-muted);font-size:.7rem">暂无密钥</p>';}
+
+// Gate
+function unlock(k){if(!k||k.length<8){$('keyErr').textContent='请输入有效密钥';$('keyErr').style.display='block';return;}var keys=getKeys();if(!keys[k]){$('keyErr').textContent='密钥不存在，请检查是否输入正确';$('keyErr').style.display='block';return;}if(keys[k].s==='used'){$('keyErr').textContent='此密钥已被使用，请联系客服获取新密钥';$('keyErr').style.display='block';return;}markUsed(k);$('gate').classList.add('hid');$('adminPanel').classList.add('hid');$('app').classList.remove('hid');}
+$('unlock').addEventListener('click',function(){unlock($('keyIn').value.trim().toUpperCase());});
+$('keyIn').addEventListener('keydown',function(e){if(e.key==='Enter')$('unlock').click();});
+
+// Bazi App
+var AK='sk-32ae8ceae83a4502b115282ef8a95882',AU='https://api.deepseek.com/v1/chat/completions';
+var bazi=null,gender='male',cal='solar';
+
+$('bS').addEventListener('click',function(){cal='solar';$('bS').classList.add('on');$('bL').classList.remove('on');$('sI').classList.remove('hid');$('lI').classList.add('hid');});
+$('bL').addEventListener('click',function(){cal='lunar';$('bL').classList.add('on');$('bS').classList.remove('on');$('sI').classList.add('hid');$('lI').classList.remove('hid');uL();});
+$('bM').addEventListener('click',function(){gender='male';$('bM').classList.add('on');$('bF').classList.remove('on');});
+$('bF').addEventListener('click',function(){gender='female';$('bF').classList.add('on');$('bM').classList.remove('on');});
+
+function uL(){var y=parseInt($('lY').value)||2006,m=BaziCalendar.getLunarMonths(y),s=$('lM');s.innerHTML='';m.forEach(function(x){var o=document.createElement('option');o.value=x.num+(x.isLeap?'_leap':'');o.textContent=(x.isLeap?'闰':'')+x.num+'月';s.appendChild(o);});uLD();}
+function uLD(){var y=parseInt($('lY').value)||2006,mv=$('lM').value,ms=BaziCalendar.getLunarMonths(y),ds=$('lD'),sm=null;ms.forEach(function(x){if((x.num+(x.isLeap?'_leap':''))===mv)sm=x;});if(!sm)sm=ms[0];ds.innerHTML='';var dn=['','初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];for(var d=1;d<=sm.days;d++){var o=document.createElement('option');o.value=d;o.textContent=dn[d]||d;ds.appendChild(o);}}
+$('lY').addEventListener('change',uL);$('lM').addEventListener('change',uLD);uL();
+
+function getBirth(){var y,m,d;if(cal==='solar'){y=parseInt($('sY').value)||2006;m=parseInt($('sM').value)||5;d=parseInt($('sD').value)||17;}else{var ly=parseInt($('lY').value)||2006,mv=$('lM').value,il=mv.indexOf('_leap')>=0,lm=parseInt(mv),ld=parseInt($('lD').value)||1;var sol=BaziCalendar.lunarToSolar(ly,lm,ld,il);if(!sol){alert('农历转换失败');return null;}y=sol.year;m=sol.month;d=sol.day;}return {year:y,month:m,day:d,hourBranchIndex:parseInt($('bH').value)||0};}
+
+function buildProfile(birth){
+  var b=Core.calculateBazi(birth.year,birth.month,birth.day,birth.hourBranchIndex);
+  var et=Core.tallyFiveElements(b),ea=Gods.analyzeElementBalance(et,b),st=Core.assessDayMasterStrength(b,et);
+  var tg=Gods.getAllTenGods(b),ss=Gods.calculateShenSha(b),pt=Gods.analyzePattern(b,tg,st);
+  var ys=b.year.stem,dy=Gods.calculateDaYun(birth.year,birth.month,birth.day,gender,ys,{stem:b.month.stem,branch:b.month.branch});
+  var now=new Date(),bd2=new Date(birth.year,birth.month-1,birth.day),age=now.getFullYear()-bd2.getFullYear();
+  if(now.getMonth()<bd2.getMonth()||(now.getMonth()===bd2.getMonth()&&now.getDate()<bd2.getDate()))age--;
+  bazi=b;bazi.elementsTally=et;bazi.elementAnalysis=ea;bazi.strength=st;bazi.tenGods=tg;bazi.shensha=ss;bazi.pattern=pt;bazi.dayun=dy;bazi.age=age;
+  var hb=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  var p=['公历'+birth.year+'年'+birth.month+'月'+birth.day+'日 '+hb[birth.hourBranchIndex]+'时 '+gender];
+  p.push('八字：'+b.year.stem.char+b.year.branch.char+' '+b.month.stem.char+b.month.branch.char+' '+b.day.stem.char+b.day.branch.char+' '+b.hour.stem.char+b.hour.branch.char);
+  p.push('日主：'+b.day.stem.char+'（'+b.day.stem.element+'） 格局：'+pt.primaryPattern+' 强弱：'+st.level+' 用神：'+st.favorable.join('、')+' 忌神：'+st.unfavorable.join('、'));
+  p.push('五行：'+ea.map(function(x){return x.element+x.percentage.toFixed(0)+'%';}).join(' '));
+  p.push('十神：年'+tg.year.stemGod+' 月'+tg.month.stemGod+' 日主 时'+tg.hour.stemGod);
+  p.push('大运起运'+dy.startAge+'岁，当前'+age+'岁');
+  dy.pillars.forEach(function(d,i){var tg2=Gods.getTenGod(b.day.stem,d.stem);p.push(' 大运'+(i+1)+'：'+d.stem.char+d.branch.char+' '+tg2+' '+d.ageStart+'-'+d.ageEnd+'岁'+(age>=d.ageStart&&age<=d.ageEnd?' ←当前':''));});
+  return {bazi:b,profile:p.join('\n')};
+}
+
+function callAI(s,u){return new Promise(function(ok,fail){var x=new XMLHttpRequest();x.open('POST',AU,true);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('Authorization','Bearer '+AK);x.timeout=30000;x.onload=function(){if(x.status>=200&&x.status<300){var d=JSON.parse(x.responseText);if(d.choices&&d.choices[0])ok(d.choices[0].message.content);else fail(new Error('API'));}else fail(new Error('HTTP'+x.status));};x.onerror=function(){fail(new Error('网络'));};x.send(JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:s},{role:'user',content:u}],temperature:.9,max_tokens:6000,top_p:.95}));});}
+
+function renderAI(text){
+  text=text.replace(/^.*?(?:好的|遵照|以下是|根据|我来|让我|现在|明白了).*?\n/,'').replace(/^\s*\n+/,'');
+  var h='',secs=text.split(/\n(?=##\s)/);
+  secs.forEach(function(sec){
+    sec=sec.trim();if(!sec)return;h+='<div class="rc">';
+    var lines=sec.split('\n'),inT=false,tH='',inL=false;
+    lines.forEach(function(l){
+      l=l.trim();if(!l){if(inT){h+=tH+'</table>';tH='';inT=false;}if(inL){h+='</ul>';inL=false;}return;}
+      if(/^##\s/.test(l)){h+='<h2>'+l.replace(/^##\s*/,'')+'</h2>';return;}if(/^###\s/.test(l)){h+='<h3>'+l.replace(/^###\s*/,'')+'</h3>';return;}if(/^####\s/.test(l)){h+='<h4>'+l.replace(/^####\s*/,'')+'</h4>';return;}
+      if(/^[\-\*]\s/.test(l)){if(!inL){h+='<ul>';inL=true;}h+='<li>'+l.replace(/^[\-\*]\s*/,'')+'</li>';return;}
+      if(l.indexOf('|')>=0&&l.indexOf('---')<0){if(inL){h+='</ul>';inL=false;}if(!inT){tH='<table class="tb">';inT=true;}var cs=l.split('|').map(function(c){return c.trim();}).filter(function(c){return c;});var ih=/^\*\*/.test(cs[0]||'');tH+='<tr>';cs.forEach(function(c){c=c.replace(/\*\*/g,'');tH+=ih?'<th>'+c+'</th>':'<td>'+c+'</td>';});tH+='</tr>';return;}
+      if(inL){h+='</ul>';inL=false;}h+='<p>'+l.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</p>';
+    });
+    if(inT)h+=tH+'</table>';if(inL)h+='</ul>';h+='</div><div class="orn">◆</div>';
+  });
+  return h;
+}
+
+$('submit').addEventListener('click',function(){
+  var birth=getBirth();if(!birth)return;
+  $('inputSection').classList.add('hid');$('loading').classList.remove('hid');$('results').classList.add('hid');
+  $('loadText').textContent='正在排盘...';
+  setTimeout(function(){
+    try{
+      var result=buildProfile(birth);bazi=result.bazi;
+      // Show fallback immediately while AI loads
+      $('loading').classList.add('hid');
+      renderFallback(bazi);
+      $('results').classList.remove('hid');
+      // Try AI in background
+      var sys='你是一位精通子平八字的命理分析师。基于命盘数据做客观精准分析。所有断语从具体干支出发。冷静专业详实。';
+      var usr='命盘数据：\n\n'+result.profile+'\n\n输出完整分析：\n## 一、八字命盘\n四柱表格+日主概述\n## 二、性格分析\n## 三、亲情与原生家庭\n## 四、感情婚姻\n含时间线表格\n## 五、财运分析\n含时间线\n## 六、健康分析\n五行脏腑表\n## 七、人际关系\n## 八、逐年运势\n每年一段 #### 20XX年\n## 九、大运走势\n## 十、建议\n3000字以上，markdown格式。';
+      callAI(sys,usr).then(function(raw){
+        $('reportContent').innerHTML=renderAI(raw);
+      }).catch(function(e){});
+    }catch(e){
+      $('loading').classList.add('hid');
+      $('reportContent').innerHTML='<div class="rc"><div class="hl"><p>命盘计算出错：'+e.message+'。请检查输入日期后重试。</p></div></div>';
+      $('results').classList.remove('hid');
+    }
+  },300);
+});
+
+function renderFallback(b){
+  var st=b.strength,pt=b.pattern,ea=b.elementAnalysis,ss=b.shensha,tg=b.tenGods,dy=b.dayun,a=b.age;
+  var EC={'木':'#5ab87a','火':'#e05555','土':'#c9a840','金':'#c0c4cc','水':'#5a8ac0'},EK={'木':'wd','火':'fr','土':'eh','金':'ml','水':'wr'};
+  var C=function(t,bd){return '<div class="rc"><h2>'+t+'</h2>'+bd+'</div><div class="orn">◆</div>';};
+  var h='',p1='<table class="tb"><tr><th></th><th>年</th><th>月</th><th>日</th><th>时</th></tr>';
+  p1+='<tr><td>天干</td><td>'+b.year.stem.char+'</td><td>'+b.month.stem.char+'</td><td class="dm">'+b.day.stem.char+'</td><td>'+b.hour.stem.char+'</td></tr>';
+  p1+='<tr><td>十神</td><td>'+tg.year.stemGod+'</td><td>'+tg.month.stemGod+'</td><td class="dm">日主</td><td>'+tg.hour.stemGod+'</td></tr>';
+  p1+='<tr><td>地支</td><td>'+b.year.branch.char+'</td><td>'+b.month.branch.char+'</td><td class="dm">'+b.day.branch.char+'</td><td>'+b.hour.branch.char+'</td></tr>';
+  p1+='<tr><td>纳音</td><td>'+b.year.nayin+'</td><td>'+b.month.nayin+'</td><td class="dm">'+b.day.nayin+'</td><td>'+b.hour.nayin+'</td></tr></table>';
+  p1+='<p>日主<strong>'+b.day.stem.char+'</strong>（'+b.day.stem.element+'），生于'+b.month.branch.char+'月。'+pt.description+'</p>';
+  h+=C('一、八字命盘',p1);
+  var p2='<p>日主<strong>'+st.level+'</strong>。用神：<strong style="color:var(--gold-light)">'+st.favorable.join('、')+'</strong>。忌神：<strong style="color:var(--red)">'+st.unfavorable.join('、')+'</strong>。</p>';
+  p2+='<div class="eb">';ea.forEach(function(x){p2+='<div class="er"><span class="ei" style="color:'+EC[x.element]+'">'+x.element+'</span><div class="et"><div class="ef '+EK[x.element]+'" style="width:'+x.percentage+'%"></div></div><span class="ep">'+x.status+'</span></div>';});p2+='</div>';
+  if(ss.length>0){p2+='<div class="tags">';ss.forEach(function(s){p2+='<span class="tg2 '+(s.type==='auspicious'?'gd':'wn')+'">'+s.name+'</span>';});p2+='</div>';}
+  h+=C('二、格局诊断',p2);
+  var p3='<p>起运<strong>'+dy.startAge+'岁</strong> · '+dy.direction+' · 当前<strong>'+a+'岁</strong></p><div class="tl">';
+  dy.pillars.forEach(function(d){var tg2=Gods.getTenGod(b.day.stem,d.stem),cur=(a>=d.ageStart&&a<=d.ageEnd);p3+='<div class="ti'+(cur?'" style="background:rgba(240,216,120,.04)"':'')+'"><span class="ty">'+d.stem.char+d.branch.char+'</span><span class="tt">'+tg2+' · '+d.ageStart+'-'+d.ageEnd+'岁'+(cur?' ◀':'')+'</span></div>';});p3+='</div>';
+  h+=C('三、大运',p3);
+  h='<div class="rc"><div class="hl"><p>AI 暂不可用，以上为基础命盘。请检查网络后重试。</p></div></div>'+h;
+  $('reportContent').innerHTML=h;
+}
+
+$('editBtn').addEventListener('click',function(){$('results').classList.add('hid');$('inputSection').classList.remove('hid');window.scrollTo({top:0,behavior:'smooth'});});
+</script>
+</body>
+</html>
